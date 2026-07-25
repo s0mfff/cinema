@@ -92,7 +92,7 @@
             padding-top: 10px;
         }
         .score-display {
-            font-size: 6rem;
+            font-size: 4rem;
             font-weight: 900;
             color: var(--text-muted);
             text-shadow: 0 0 10px rgba(255,255,255,0.05);
@@ -104,7 +104,7 @@
             text-shadow: 0 0 50px rgba(255, 215, 0, 0.7) !important;
         }
         .score-display .slash {
-            font-size: 1.8rem;
+            font-size: 1.4rem;
             color: var(--text-muted);
             font-weight: 400;
         }
@@ -119,6 +119,33 @@
         /* Коллекция */
         .collection-controls { display: flex; gap: 10px; flex-direction: column; }
         .collection-sort { background: var(--card-bg); color: #fff; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; font-size: 0.9rem; outline: none; }
+
+        /* Фильтр по оценкам — горизонтальная лента */
+        .score-filter-scroll {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 6px 0 10px 0;
+            scrollbar-width: none;
+        }
+        .score-filter-scroll::-webkit-scrollbar { display: none; }
+        .score-filter-scroll .filter-btn {
+            flex-shrink: 0;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid #2a2b30;
+            background: transparent;
+            color: #aaa;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .score-filter-scroll .filter-btn.active {
+            border-color: var(--blue-accent);
+            background: #3a86ff22;
+            color: #fff;
+        }
+        .score-filter-scroll .filter-btn:active { transform: scale(0.95); }
 
         .history-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
         .history-item {
@@ -147,7 +174,7 @@
         }
         .history-item-score.gold { color: var(--gold); }
         .history-item-status {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
             background: #2c2d31;
             padding: 0 8px;
@@ -271,11 +298,13 @@
             gap: 10px;
             justify-content: center;
             margin-top: 12px;
+            flex-wrap: wrap;
         }
-        .modal-actions .action-btn { flex: 1; }
+        .modal-actions .action-btn { flex: 1; min-width: 80px; }
         .modal-actions .edit-btn { background: var(--purple-accent); color: #fff; }
         .modal-actions .save-edit-btn { background: var(--blue-accent); color: #fff; display: none; }
         .modal-actions .delete-btn { background: var(--red-accent); color: #fff; }
+        .modal-actions .kp-link-btn { background: #2a2b30; color: #fff; }
         .edit-mode .modal-actions .save-edit-btn { display: block; }
         .edit-mode .modal-actions .edit-btn { display: none; }
 
@@ -396,6 +425,22 @@
                 <option value="lowest">Сначала низкие баллы</option>
             </select>
         </div>
+
+        <!-- Фильтр по оценкам — горизонтальная лента -->
+        <div class="score-filter-scroll" id="scoreFilterScroll">
+            <button class="filter-btn active" data-score="all">Все</button>
+            <button class="filter-btn" data-score="1">1</button>
+            <button class="filter-btn" data-score="2">2</button>
+            <button class="filter-btn" data-score="3">3</button>
+            <button class="filter-btn" data-score="4">4</button>
+            <button class="filter-btn" data-score="5">5</button>
+            <button class="filter-btn" data-score="6">6</button>
+            <button class="filter-btn" data-score="7">7</button>
+            <button class="filter-btn" data-score="8">8</button>
+            <button class="filter-btn" data-score="9">9</button>
+            <button class="filter-btn" data-score="10">10</button>
+        </div>
+
         <div id="collection-list" class="history-list"></div>
     </div>
 
@@ -425,6 +470,7 @@
                 <button class="action-btn edit-btn" id="modal-edit-btn">✏️ Изменить</button>
                 <button class="action-btn save-edit-btn" id="modal-save-edit-btn" style="display:none;">💾 Сохранить</button>
                 <button class="action-btn delete-btn" id="modal-delete-btn">🗑️ Удалить</button>
+                <button class="action-btn kp-link-btn" id="modal-kp-btn">🎬 Кинопоиск</button>
             </div>
         </div>
     </div>
@@ -533,7 +579,7 @@
         // ============================================
         let selectedFilm = null;
         let currentMode = 'basic'; // basic или extended
-        let historyData = [];
+        let currentScoreFilter = 'all'; // 'all' или число 1-10
 
         // Элементы
         const searchInput = document.getElementById('search-input');
@@ -842,12 +888,41 @@
         const collectionSearch = document.getElementById('collection-search');
         const collectionSort = document.getElementById('collection-sort');
         const collectionList = document.getElementById('collection-list');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+
+        // Обработчики для фильтра по оценкам
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                filterButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentScoreFilter = this.dataset.score;
+                renderCollection();
+            });
+        });
 
         async function renderCollection() {
             const query = collectionSearch.value.toLowerCase();
             const sortMethod = collectionSort.value;
             let data = await loadCollection();
+
+            // Поиск по тексту
             if (query) data = data.filter(item => item.title.toLowerCase().includes(query));
+
+            // Фильтр по оценке
+            if (currentScoreFilter !== 'all') {
+                const filterVal = parseFloat(currentScoreFilter);
+                data = data.filter(item => {
+                    // Для базовой оценки округляем до целого
+                    if (item.mode === 'basic') {
+                        return Math.round(item.score) === filterVal;
+                    } else {
+                        // Для расширенной — проверяем, попадает ли в диапазон ранга или просто округляем
+                        return Math.round(item.score) === filterVal;
+                    }
+                });
+            }
+
+            // Сортировка
             if (sortMethod === 'highest') data.sort((a, b) => b.score - a.score);
             else if (sortMethod === 'lowest') data.sort((a, b) => a.score - b.score);
             else data.sort((a, b) => b.id - a.id);
@@ -914,6 +989,7 @@
         const modalEditBtn = document.getElementById('modal-edit-btn');
         const modalSaveEditBtn = document.getElementById('modal-save-edit-btn');
         const modalDeleteBtn = document.getElementById('modal-delete-btn');
+        const modalKpBtn = document.getElementById('modal-kp-btn');
         let currentModalItemId = null;
         let isEditMode = false;
 
@@ -928,6 +1004,11 @@
             document.getElementById('modal-title').textContent = item.title;
             document.getElementById('modal-artist').textContent = item.year || 'н/д';
             document.getElementById('modal-meta').textContent = item.type === 'cartoon' ? 'Мультфильм' : 'Фильм';
+
+            // Кнопка Кинопоиска
+            modalKpBtn.onclick = function() {
+                tg.openLink(`https://www.kinopoisk.ru/film/${item.id}/`);
+            };
 
             const container = document.getElementById('modal-sliders-container');
             container.innerHTML = '';
