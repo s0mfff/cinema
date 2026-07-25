@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>РЗТ Кино</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #111113;
+            color: #eee;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 480px;
+            width: 100%;
+            background: #1d1e22;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+        }
+        h1 { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        h1 span { background: #3a86ff; font-size: 13px; padding: 2px 12px; border-radius: 20px; color:#fff; }
+        .sub { color: #888; font-size: 14px; margin-bottom: 16px; }
+        .search-box { display: flex; gap: 8px; margin-bottom: 16px; }
+        .search-box input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #2a2b30;
+            background: #0f0f12;
+            color: #eee;
+            font-size: 16px;
+            outline: none;
+        }
+        .search-box input:focus { border-color: #3a86ff; }
+        .search-box button {
+            padding: 10px 18px;
+            border-radius: 12px;
+            border: none;
+            background: #3a86ff;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .results {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            background: #0f0f12;
+            border-radius: 12px;
+            padding: 4px;
+        }
+        .results .item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #1d1e22;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .results .item:active { background: #2a2b30; }
+        .results .item img {
+            width: 40px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: #2a2b30;
+        }
+        .results .item .info { flex: 1; }
+        .results .item .title { font-weight: 500; font-size: 15px; }
+        .results .item .year { font-size: 13px; color: #888; }
+        .results .item .badge {
+            background: #2a2b30;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        .results .item .badge.cartoon { background: #8338ec; color: #fff; }
+        .selected {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #0f0f12;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+        }
+        .selected img {
+            width: 50px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #2a2b30;
+        }
+        .selected .info { flex: 1; }
+        .selected .info .title { font-weight: 600; font-size: 17px; }
+        .selected .info .meta { font-size: 14px; color: #888; }
+        .selected .type { color:#888; font-size:12px; }
+
+        .mode-switch {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .mode-switch button {
+            flex: 1;
+            padding: 8px;
+            border-radius: 10px;
+            border: 1px solid #2a2b30;
+            background: transparent;
+            color: #aaa;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .mode-switch button.active {
+            border-color: #3a86ff;
+            background: #3a86ff22;
+            color: #fff;
+        }
+        .mode-switch button:disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .slider-item {
+            margin-bottom: 14px;
+        }
+        .slider-item .label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 15px;
+            margin-bottom: 2px;
+        }
+        .slider-item .label-row .val {
+            color: #3a86ff;
+            font-weight: 700;
+            min-width: 28px;
+            text-align: right;
+        }
+        .slider-item .label-row .val.purple { color: #8338ec; }
+        .slider-item input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #2a2b30;
+            border-radius: 4px;
+            outline: none;
+        }
+        .slider-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #3a86ff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(58,134,255,0.4);
+        }
+        .slider-item input[type="range"].purple-slider::-webkit-slider-thumb {
+            background: #8338ec;
+            box-shadow: 0 2px 8px rgba(131,56,236,0.4);
+        }
+
+        .group-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #aaa;
+            border-bottom: 1px solid #2a2b30;
+            padding-bottom: 6px;
+            margin: 16px 0 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .group-title .badge {
+            background: #2a2b30;
+            padding: 0 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #ccc;
+        }
+        .result-box {
+            background: #0f0f12;
+            border-radius: 16px;
+            padding: 18px 16px;
+            text-align: center;
+            border: 1px solid #2a2b30;
+            margin-top: 8px;
+        }
+        .result-box .score {
+            font-size: 48px;
+            font-weight: 800;
+            line-height: 1;
+            color: #fff;
+        }
+        .result-box .score.gold { color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.3); }
+        .result-box .rank {
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 4px;
+            color: #bbb;
+        }
+        .result-box .rank .emoji { font-size: 24px; vertical-align: middle; margin-right: 4px; }
+        .result-box .detail {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px 12px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #888;
+        }
+        .result-box .detail span { background:#1d1e22; padding:2px 10px; border-radius:16px; }
+        .result-box .detail .highlight { color:#3a86ff; }
+        .result-box .detail .highlight.purple { color:#8338ec; }
+
+        .hint {
+            font-size: 13px;
+            color: #888;
+            margin-top: 12px;
+            padding: 8px 12px;
+            background: #0f0f12;
+            border-radius: 10px;
+            border-left: 3px solid #3a86ff;
+        }
+        .hint .movie-item {
+            display: inline-block;
+            background: #1d1e22;
+            padding: 2px 10px;
+            border-radius: 12px;
+            margin: 2px 4px 2px 0;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .actions button {
+            flex:1;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .actions .save { background: #3a86ff; color:#fff; }
+        .actions .save:active { opacity:0.7; }
+        .actions .clear { background: #2a2b30; color:#aaa; }
+        .hidden { display: none !important; }
+        .footnote { font-size:11px; color:#555; text-align:center; margin-top:12px; }
+
+        .collection {
+            margin-top: 20px;
+            border-top: 1px solid #2a2b30;
+            padding-top: 16px;
+        }
+        .collection .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #1d1e22;
+            font-size: 14px;
+        }
+        .collection .item .score-badge {
+            background: #2a2b30;
+            padding: 0 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .empty-text { color: #555; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎬 РЗТ Кино <span>KP</span></h1>
+    <div class="sub">Поиск через Кинопоиск Unofficial</div>
+
+    <!-- Поиск -->
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Название фильма..." />
+        <button id="searchBtn">Найти</button>
+    </div>
+    <div id="resultsContainer" class="results hidden"></div>
+
+    <!-- Выбранный фильм -->
+    <div id="selectedContainer" class="selected hidden">
+        <img id="selectedPoster" src="" alt="постер" />
+        <div class="info">
+            <div class="title" id="selectedTitle">Название</div>
+            <div class="meta" id="selectedMeta">Год · Жанры</div>
+        </div>
+        <div class="type" id="selectedType">🎬 фильм</div>
+    </div>
+
+    <!-- Переключение режимов -->
+    <div class="mode-switch">
+        <button class="active" data-mode="basic" id="modeBasic">⭐ Базовая</button>
+        <button data-mode="extended" id="modeExtended">📊 Расширенная</button>
+    </div>
+
+    <!-- Базовый режим -->
+    <div id="basicMode">
+        <div class="slider-item">
+            <div class="label-row">
+                <span>Оценка фильма</span>
+                <span class="val" id="basicVal">5.0</span>
+            </div>
+            <input type="range" id="basicSlider" min="1" max="10" step="0.5" value="5" />
+        </div>
+        <div id="basicHint" class="hint hidden">
+            <div style="margin-bottom:4px;">📽️ Фильмы с такой оценкой в вашей коллекции:</div>
+            <div id="basicHintList"></div>
+        </div>
+    </div>
+
+    <!-- Расширенный режим -->
+    <div id="extendedMode" class="hidden">
+        <div class="group-title"><span>Базовые (суммируются)</span><span>1–5</span></div>
+        <div class="slider-item">
+            <div class="label-row"><span>Сюжет и сценарий</span><span class="val" id="val-script">3.0</span></div>
+            <input type="range" id="script" min="1" max="5" step="0.5" value="3" />
+        </div>
+        <div class="slider-item">
+            <div class="label-row"><span>Актёрская игра</span><span class="val" id="val-acting">3.0</span></div>
+            <input type="range" id="acting" min="1" max="5" step="0.5" value="3" />
+        </div>
+        <div class="slider-item">
+            <div class="label-row"><span>Режиссура</span><span class="val" id="val-directing">3.0</span></div>
+            <input type="range" id="directing" min="1" max="5" step="0.5" value="3" />
+        </div>
+        <div class="group-title"><span>Множители</span><span>1–5 → коэф.</span></div>
+        <div class="slider-item">
+            <div class="label-row"><span>Визуал и операторская</span><span class="val purple" id="val-visual">3.0</span></div>
+            <input type="range" id="visual" min="1" max="5" step="1" value="3" class="purple-slider" />
+        </div>
+        <div class="slider-item">
+            <div class="label-row"><span>Саунд-дизайн и музыка</span><span class="val purple" id="val-sound">3.0</span></div>
+            <input type="range" id="sound" min="1" max="5" step="1" value="3" class="purple-slider" />
+        </div>
+        <div class="slider-item">
+            <div class="label-row"><span>Актуальность / Смысл</span><span class="val purple" id="val-relevance">3.0</span></div>
+            <input type="range" id="relevance" min="1" max="5" step="1" value="3" class="purple-slider" />
+        </div>
+        <div class="result-box">
+            <div class="score" id="scoreDisplay">16.20</div>
+            <div class="rank" id="rankDisplay"><span class="emoji">💎</span> Изумрудный фильм</div>
+            <div class="detail">
+                <span>Базовые: <span id="baseSum" class="highlight">9.0</span></span>
+                <span>Визуал: <span id="coefVisual" class="highlight purple">1.03</span></span>
+                <span>Саунд: <span id="coefSound" class="highlight purple">1.03</span></span>
+                <span>Актуальность: <span id="coefRelevance" class="highlight purple">1.03</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Действия -->
+    <div class="actions">
+        <button class="save" id="saveBtn">💾 Сохранить</button>
+        <button class="clear" id="clearBtn">🗑️ Очистить</button>
+    </div>
+
+    <!-- Коллекция -->
+    <div class="collection">
+        <div style="font-weight:600; margin-bottom:8px;">📚 Моя коллекция</div>
+        <div id="collectionList" class="empty-text">Пока нет оценок</div>
+    </div>
+    <div class="footnote">Ранги: 🥈 0–5.99 · 🥇 6–11.99 · 💎 12–17.99 · 🔷 18–23.99 · 🔴 24–30</div>
+</div>
+
+<script>
+    // ============================================================
+    //  1. API КЛЮЧ КИНОПОИСКА (вставлен)
+    // ============================================================
+    const KP_API_KEY = 'ee7d5979-e5d4-4387-854f-46f5f109036f';
+
+    // ============================================================
+    //  2. ИНИЦИАЛИЗАЦИЯ TELEGRAM WEB APP
+    // ============================================================
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    // ============================================================
+    //  3. РАБОТА С CLOUDSTORAGE (синхронизация между устройствами)
+    // ============================================================
+    const STORAGE_KEY = 'rzt_cinema_history';
+
+    function cloudGet(key) {
+        return new Promise((resolve) => {
+            tg.CloudStorage.getItem(key, (err, value) => {
+                if (err) resolve(null);
+                else resolve(value);
+            });
+        });
+    }
+
+    function cloudSet(key, value) {
+        return new Promise((resolve) => {
+            tg.CloudStorage.setItem(key, value, (err) => {
+                resolve(!err);
+            });
+        });
+    }
+
+    async function loadCollection() {
+        try {
+            const data = await cloudGet(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        } catch {
+            return [];
+        }
+    }
+
+    async function saveCollection(collection) {
+        await cloudSet(STORAGE_KEY, JSON.stringify(collection));
+        renderCollection();
+        updateHints();
+    }
+
+    // ============================================================
+    //  4. API КИНОПОИСКА (поиск и детали)
+    // ============================================================
+    async function searchKinopoisk(query) {
+        const url = `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}&page=1`;
+        const resp = await fetch(url, {
+            headers: {
+                'X-API-KEY': KP_API_KEY,
+                'Content-Type': 'application/json',
+            }
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        return data.films.map(f => ({
+            id: f.filmId,
+            title: f.nameRu || f.nameEn || f.nameOriginal || 'Без названия',
+            year: f.year || 'Неизвестно',
+            image: f.posterUrlPreview || '',
+            rating: f.rating || 0,
+        }));
+    }
+
+    async function getFilmDetails(filmId) {
+        const url = `https://kinopoiskapiunofficial.tech/api/v2.2/films/${filmId}`;
+        const resp = await fetch(url, {
+            headers: {
+                'X-API-KEY': KP_API_KEY,
+                'Content-Type': 'application/json',
+            }
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        const genres = data.genres || [];
+        const isCartoon = genres.some(g =>
+            g.genre.includes('мультфильм') || g.genre.includes('анимация')
+        );
+        return {
+            genres: genres.map(g => g.genre).join(', '),
+            isCartoon: isCartoon,
+            description: data.description || '',
+            year: data.year || 'Неизвестно',
+            poster: data.posterUrl || '',
+        };
+    }
+
+    // ============================================================
+    //  5. ОТОБРАЖЕНИЕ КОЛЛЕКЦИИ
+    // ============================================================
+    async function renderCollection() {
+        const list = document.getElementById('collectionList');
+        const coll = await loadCollection();
+        if (coll.length === 0) {
+            list.innerHTML = 'Пока нет оценок';
+            return;
+        }
+        list.innerHTML = coll.map(item => `
+            <div class="item">
+                <span>${item.title} (${item.year || 'н/д'})</span>
+                <span class="score-badge">${item.mode === 'basic' ? item.score.toFixed(1) + '/10' : item.score.toFixed(2) + ' (' + (item.rank || '—') + ')'}</span>
+            </div>
+        `).join('');
+    }
+
+    // ============================================================
+    //  6. ПОДСКАЗКИ (фильмы с близкой оценкой)
+    // ============================================================
+    async function updateHints() {
+        const basicVal = parseFloat(document.getElementById('basicSlider').value);
+        const coll = await loadCollection();
+        const similar = coll
+            .filter(item => item.mode === 'basic' && Math.abs(item.score - basicVal) < 0.75)
+            .slice(0, 5);
+        const hintBlock = document.getElementById('basicHint');
+        const hintList = document.getElementById('basicHintList');
+        if (similar.length === 0) {
+            hintBlock.classList.add('hidden');
+            return;
+        }
+        hintBlock.classList.remove('hidden');
+        hintList.innerHTML = similar.map(item =>
+            `<span class="movie-item">${item.title} (${item.score.toFixed(1)})</span>`
+        ).join('');
+    }
+
+    // ============================================================
+    //  7. РАСШИРЕННАЯ ОЦЕНКА (формула и ранги)
+    // ============================================================
+    const ranks = [
+        { min: 0.34, max: 5.99, label: 'Серебряный', emoji: '🥈' },
+        { min: 6, max: 11.99, label: 'Золотой', emoji: '🥇' },
+        { min: 12, max: 17.99, label: 'Изумрудный', emoji: '💎' },
+        { min: 18, max: 23.99, label: 'Сапфировый', emoji: '🔷' },
+        { min: 24, max: 30, label: 'Рубиновый', emoji: '🔴' }
+    ];
+
+    function getRank(score) {
+        for (let r of ranks) if (score >= r.min && score <= r.max) return r;
+        return ranks[0];
+    }
+
+    function getCoef(val) { return 0.80 + (val - 1) * 0.115; }
+
+    function updateExtended() {
+        const script = parseFloat(document.getElementById('script').value);
+        const acting = parseFloat(document.getElementById('acting').value);
+        const directing = parseFloat(document.getElementById('directing').value);
+        const visual = parseFloat(document.getElementById('visual').value);
+        const sound = parseFloat(document.getElementById('sound').value);
+        const relevance = parseFloat(document.getElementById('relevance').value);
+
+        document.getElementById('val-script').textContent = script.toFixed(1);
+        document.getElementById('val-acting').textContent = acting.toFixed(1);
+        document.getElementById('val-directing').textContent = directing.toFixed(1);
+        document.getElementById('val-visual').textContent = visual.toFixed(1);
+        document.getElementById('val-sound').textContent = sound.toFixed(1);
+        document.getElementById('val-relevance').textContent = relevance.toFixed(1);
+
+        const base = script + acting + directing;
+        const kVisual = getCoef(visual);
+        const kSound = getCoef(sound);
+        const kRelevance = getCoef(relevance);
+        let score = base * kVisual * kSound * kRelevance;
+        score = Math.min(Math.round(score * 100) / 100, 30);
+
+        document.getElementById('baseSum').textContent = base.toFixed(1);
+        document.getElementById('coefVisual').textContent = kVisual.toFixed(3);
+        document.getElementById('coefSound').textContent = kSound.toFixed(3);
+        document.getElementById('coefRelevance').textContent = kRelevance.toFixed(3);
+
+        const scoreEl = document.getElementById('scoreDisplay');
+        scoreEl.textContent = score.toFixed(2);
+        scoreEl.classList.toggle('gold', score >= 24);
+
+        const rank = getRank(score);
+        document.getElementById('rankDisplay').innerHTML =
+            `<span class="emoji">${rank.emoji}</span> ${rank.label} фильм`;
+    }
+
+    // ============================================================
+    //  8. ОСНОВНАЯ ЛОГИКА ПРИЛОЖЕНИЯ
+    // ============================================================
+    let selectedFilm = null; // { id, title, year, image, isCartoon, genres }
+    let currentMode = 'basic';
+
+    async function performSearch() {
+        const query = document.getElementById('searchInput').value.trim();
+        if (!query) return;
+        const container = document.getElementById('resultsContainer');
+        container.innerHTML = '<div style="padding:12px; color:#888;">Загрузка...</div>';
+        container.classList.remove('hidden');
+
+        try {
+            const films = await searchKinopoisk(query);
+            if (films.length === 0) {
+                container.innerHTML = '<div style="padding:12px; color:#888;">Ничего не найдено</div>';
+                return;
+            }
+            // Обогащаем деталями
+            const enriched = await Promise.all(films.map(async f => {
+                try {
+                    const details = await getFilmDetails(f.id);
+                    return { ...f, ...details };
+                } catch {
+                    return { ...f, genres: 'Неизвестно', isCartoon: false };
+                }
+            }));
+
+            container.innerHTML = enriched.map(f => `
+                <div class="item" data-id="${f.id}">
+                    <img src="${f.image || ''}" alt="постер" />
+                    <div class="info">
+                        <div class="title">${f.title}</div>
+                        <div class="year">${f.year} · ${f.genres || '—'}</div>
+                    </div>
+                    <div class="badge ${f.isCartoon ? 'cartoon' : ''}">${f.isCartoon ? '🎨 Мульт' : '🎬 Фильм'}</div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.results .item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = parseInt(el.dataset.id);
+                    const film = enriched.find(f => f.id === id);
+                    if (film) selectFilm(film);
+                });
+            });
+        } catch (err) {
+            container.innerHTML = `<div style="padding:12px; color:#ff6b6b;">Ошибка: ${err.message}</div>`;
+        }
+    }
+
+    function selectFilm(film) {
+        selectedFilm = film;
+        document.getElementById('resultsContainer').classList.add('hidden');
+
+        const container = document.getElementById('selectedContainer');
+        container.classList.remove('hidden');
+        document.getElementById('selectedPoster').src = film.image || '';
+        document.getElementById('selectedTitle').textContent = film.title;
+        document.getElementById('selectedMeta').textContent = `${film.year} · ${film.genres || '—'}`;
+        document.getElementById('selectedType').textContent = film.isCartoon ? '🎨 Мультфильм' : '🎬 Фильм';
+
+        const modeBasic = document.getElementById('modeBasic');
+        const modeExtended = document.getElementById('modeExtended');
+        if (film.isCartoon) {
+            modeExtended.disabled = true;
+            modeExtended.classList.remove('active');
+            modeBasic.classList.add('active');
+            currentMode = 'basic';
+            switchMode('basic');
+        } else {
+            modeExtended.disabled = false;
+            if (currentMode === 'extended') {
+                modeExtended.classList.add('active');
+                modeBasic.classList.remove('active');
+                switchMode('extended');
+            } else {
+                modeBasic.classList.add('active');
+                modeExtended.classList.remove('active');
+                switchMode('basic');
+            }
+        }
+    }
+
+    function switchMode(mode) {
+        currentMode = mode;
+        document.getElementById('basicMode').classList.toggle('hidden', mode !== 'basic');
+        document.getElementById('extendedMode').classList.toggle('hidden', mode !== 'extended');
+    }
+
+    async function saveCurrent() {
+        if (!selectedFilm) {
+            tg.showAlert('Сначала выберите фильм');
+            return;
+        }
+        const coll = await loadCollection();
+        const item = {
+            id: selectedFilm.id,
+            title: selectedFilm.title,
+            year: selectedFilm.year,
+            image: selectedFilm.image,
+            type: selectedFilm.isCartoon ? 'cartoon' : 'movie',
+            mode: currentMode,
+            score: 0,
+            rank: null,
+        };
+
+        if (currentMode === 'basic') {
+            const score = parseFloat(document.getElementById('basicSlider').value);
+            item.score = score;
+        } else {
+            const script = parseFloat(document.getElementById('script').value);
+            const acting = parseFloat(document.getElementById('acting').value);
+            const directing = parseFloat(document.getElementById('directing').value);
+            const visual = parseFloat(document.getElementById('visual').value);
+            const sound = parseFloat(document.getElementById('sound').value);
+            const relevance = parseFloat(document.getElementById('relevance').value);
+            const base = script + acting + directing;
+            const score = Math.min(Math.round(base * getCoef(visual) * getCoef(sound) * getCoef(relevance) * 100) / 100, 30);
+            item.score = score;
+            item.rank = getRank(score).label;
+            item.sliders = { script, acting, directing, visual, sound, relevance };
+        }
+
+        // Проверка дубликата
+        if (coll.some(el => el.id === item.id)) {
+            tg.showAlert('Этот фильм уже есть в коллекции!');
+            return;
+        }
+        coll.push(item);
+        await saveCollection(coll);
+        tg.showAlert('Оценка сохранена!');
+        renderCollection();
+        updateHints();
+    }
+
+    async function clearAll() {
+        tg.showConfirm('Удалить все оценки из коллекции?', async (confirmed) => {
+            if (confirmed) {
+                await cloudSet(STORAGE_KEY, JSON.stringify([]));
+                renderCollection();
+                updateHints();
+            }
+        });
+    }
+
+    // ============================================================
+    //  9. ИНИЦИАЛИЗАЦИЯ И ОБРАБОТЧИКИ
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Поиск
+        document.getElementById('searchBtn').addEventListener('click', performSearch);
+        document.getElementById('searchInput').addEventListener('keyup', e => {
+            if (e.key === 'Enter') performSearch();
+        });
+
+        // Переключение режимов
+        document.getElementById('modeBasic').addEventListener('click', () => {
+            if (selectedFilm && selectedFilm.isCartoon) return;
+            document.getElementById('modeBasic').classList.add('active');
+            document.getElementById('modeExtended').classList.remove('active');
+            switchMode('basic');
+        });
+        document.getElementById('modeExtended').addEventListener('click', () => {
+            if (selectedFilm && selectedFilm.isCartoon) {
+                tg.showAlert('Для мультфильмов доступна только базовая оценка');
+                return;
+            }
+            document.getElementById('modeExtended').classList.add('active');
+            document.getElementById('modeBasic').classList.remove('active');
+            switchMode('extended');
+        });
+
+        // Слайдеры
+        document.getElementById('basicSlider').addEventListener('input', () => {
+            const val = parseFloat(document.getElementById('basicSlider').value);
+            document.getElementById('basicVal').textContent = val.toFixed(1);
+            updateHints();
+        });
+
+        ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateExtended);
+        });
+
+        // Сохранение / очистка
+        document.getElementById('saveBtn').addEventListener('click', saveCurrent);
+        document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+        // Загрузка коллекции
+        await renderCollection();
+        await updateHints();
+        updateExtended();
+        document.getElementById('selectedContainer').classList.add('hidden');
+    });
+</script>
+</body>
+</html>
