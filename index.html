@@ -6,381 +6,181 @@
     <title>Оценка фильма</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* ===== ОБЩИЕ СТИЛИ ===== */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-color: #111113;
+            --card-bg: #1d1e22;
+            --text-color: #ffffff;
+            --text-muted: #8e8f93;
+            --blue-accent: #3a86ff;
+            --purple-accent: #8338ec;
+            --gold: #FFD700;
+            --border-color: #2c2d31;
+            --red-accent: #ff4757;
+        }
+        * { box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #111113;
-            color: #eee;
-            padding: 16px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
             display: flex;
-            justify-content: center;
-            min-height: 100vh;
+            flex-direction: column;
+            height: 100vh;
+            user-select: none;
         }
-        .container {
-            max-width: 480px;
-            width: 100%;
-            background: #1d1e22;
-            border-radius: 24px;
-            padding: 20px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-        }
-        .header {
+        .tab-content { display: none; flex-direction: column; gap: 16px; padding: 16px; overflow-y: auto; flex-grow: 1; padding-bottom: 80px; }
+        .tab-content.active { display: flex; }
+
+        /* Поиск */
+        .search-container { position: relative; }
+        .search-input, .collection-search { width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; color: #fff; font-size: 1rem; outline: none; box-sizing: border-box; }
+        .search-input:focus, .collection-search:focus { border-color: var(--blue-accent); }
+        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: #18191d; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 12px 12px; max-height: 250px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .search-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; }
+        .search-item:hover { background: #25262b; }
+        .search-item img { width: 40px; height: 56px; border-radius: 6px; object-fit: cover; }
+        .search-item-info { display: flex; flex-direction: column; gap: 2px; }
+        .search-item-title { font-weight: 600; font-size: 0.9rem; }
+        .search-item-artist { font-size: 0.75rem; color: var(--text-muted); }
+        .search-msg { padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+
+        /* Карточка выбранного фильма */
+        .selected-release-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: none; align-items: center; gap: 16px; }
+        .selected-release-card img { width: 70px; height: 70px; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover; }
+        .release-details { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; }
+        .release-title { font-size: 1.1rem; font-weight: bold; }
+        .release-artist { font-size: 0.9rem; color: var(--blue-accent); }
+        .release-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .badge { background: #2c2d31; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase; font-weight: bold; }
+
+        /* Слайдеры */
+        .sliders-group { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        .sliders-group h2 { 
+            margin: 0 0 4px 0;
+            font-size: 1.1rem; 
+            color: var(--text-muted); 
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
         }
-        .header h1 { font-size: 22px; font-weight: 700; }
-        .tabs {
-            display: flex;
-            gap: 6px;
-        }
-        .tabs button {
-            padding: 6px 14px;
-            border-radius: 20px;
-            border: 1px solid #2a2b30;
-            background: transparent;
-            color: #aaa;
-            font-weight: 600;
-            font-size: 14px;
+        .sliders-group h2 .criteria-link {
+            font-size: 0.8rem;
+            color: var(--blue-accent);
             cursor: pointer;
-            transition: 0.2s;
-        }
-        .tabs button.active {
-            border-color: #3a86ff;
-            background: #3a86ff22;
-            color: #fff;
-        }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* ===== ВКЛАДКА ОЦЕНКИ ===== */
-        .sub { color: #888; font-size: 14px; margin-bottom: 16px; }
-        .search-box { display: flex; gap: 8px; margin-bottom: 16px; }
-        .search-box input {
-            flex: 1;
-            padding: 10px 14px;
-            border-radius: 12px;
-            border: 1px solid #2a2b30;
-            background: #0f0f12;
-            color: #eee;
-            font-size: 16px;
-            outline: none;
-        }
-        .search-box input:focus { border-color: #3a86ff; }
-        .search-box button {
-            padding: 10px 18px;
-            border-radius: 12px;
+            background: none;
             border: none;
-            background: #3a86ff;
-            color: #fff;
-            font-weight: 600;
-            cursor: pointer;
+            text-decoration: underline;
+            font-weight: normal;
         }
-        .results {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-bottom: 16px;
-            background: #0f0f12;
-            border-radius: 12px;
-            padding: 4px;
-        }
-        .results .item {
+        .blue-group { border-left: 4px solid var(--blue-accent); }
+        .purple-group { border-left: 4px solid var(--purple-accent); }
+        .slider-container { display: flex; flex-direction: column; gap: 6px; }
+        .slider-header { display: flex; justify-content: space-between; font-size: 0.9rem; }
+        .slider-header .value { font-weight: bold; font-size: 1.1rem; }
+        .blue-group .value { color: var(--blue-accent); }
+        .purple-group .value { color: var(--purple-accent); }
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #2d2e33; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle, #ececec 0%, #a2a2a2 100%); border: 2px solid #555; box-shadow: 0 2px 4px rgba(0,0,0,0.4); cursor: pointer; }
+        input[type="range"]:disabled::-webkit-slider-thumb { background: #555; border-color: #333; cursor: default; }
+        input[type="range"]:disabled { opacity: 0.6; }
+
+        .footer-score {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            border-bottom: 1px solid #1d1e22;
-            cursor: pointer;
-            transition: background 0.1s;
+            padding-top: 10px;
         }
-        .results .item:active { background: #2a2b30; }
-        .results .item img {
-            width: 40px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 6px;
-            background: #2a2b30;
+        .score-display {
+            font-size: 6rem;
+            font-weight: 900;
+            color: var(--text-muted);
+            text-shadow: 0 0 10px rgba(255,255,255,0.05);
+            transition: color 0.2s, text-shadow 0.2s;
+            line-height: 1;
         }
-        .results .item .info { flex: 1; }
-        .results .item .title { font-weight: 500; font-size: 15px; }
-        .results .item .year { font-size: 13px; color: #888; }
-        .results .item .badge {
-            background: #2a2b30;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            color: #aaa;
+        .score-display.gold {
+            color: var(--gold) !important;
+            text-shadow: 0 0 50px rgba(255, 215, 0, 0.7) !important;
         }
-        .results .item .badge.cartoon { background: #8338ec; color: #fff; }
-        .selected {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #0f0f12;
+        .score-display .slash {
+            font-size: 1.8rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .score-display .total {
+            display: inline-block;
+        }
+        .btn-group { display: flex; gap: 10px; }
+        .action-btn { background: #ffffff; color: #000000; border: none; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
+        .save-btn { background: var(--blue-accent); color: #fff; }
+        .action-btn:active { transform: scale(0.95); }
+
+        /* Коллекция */
+        .collection-controls { display: flex; gap: 10px; flex-direction: column; }
+        .collection-sort { background: var(--card-bg); color: #fff; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; font-size: 0.9rem; outline: none; }
+
+        .history-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+        .history-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 12px 16px;
-            margin-bottom: 16px;
-        }
-        .selected img {
-            width: 50px;
-            height: 70px;
-            object-fit: cover;
-            border-radius: 8px;
-            background: #2a2b30;
-        }
-        .selected .info { flex: 1; }
-        .selected .info .title { font-weight: 600; font-size: 17px; }
-        .selected .info .meta { font-size: 14px; color: #888; }
-        .selected .type { color:#888; font-size:12px; }
-
-        .mode-switch {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .mode-switch button {
-            flex: 1;
-            padding: 8px;
-            border-radius: 10px;
-            border: 1px solid #2a2b30;
-            background: transparent;
-            color: #aaa;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .mode-switch button.active {
-            border-color: #3a86ff;
-            background: #3a86ff22;
-            color: #fff;
-        }
-        .mode-switch button:disabled {
-            opacity: 0.3;
-            pointer-events: none;
-        }
-
-        .slider-item {
-            margin-bottom: 14px;
-        }
-        .slider-item .label-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 15px;
-            margin-bottom: 2px;
-        }
-        .slider-item .label-row .val {
-            color: #3a86ff;
-            font-weight: 700;
-            min-width: 28px;
-            text-align: right;
-        }
-        .slider-item .label-row .val.purple { color: #8338ec; }
-        .slider-item input[type="range"] {
-            width: 100%;
-            height: 6px;
-            -webkit-appearance: none;
-            background: #2a2b30;
-            border-radius: 4px;
-            outline: none;
-        }
-        .slider-item input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            background: #3a86ff;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(58,134,255,0.4);
-        }
-        .slider-item input[type="range"].purple-slider::-webkit-slider-thumb {
-            background: #8338ec;
-            box-shadow: 0 2px 8px rgba(131,56,236,0.4);
-        }
-        .slider-item input[type="range"]:disabled::-webkit-slider-thumb {
-            background: #555;
-            box-shadow: none;
-            cursor: default;
-        }
-
-        .group-title {
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #aaa;
-            border-bottom: 1px solid #2a2b30;
-            padding-bottom: 6px;
-            margin: 16px 0 12px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .group-title .badge {
-            background: #2a2b30;
-            padding: 0 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            color: #ccc;
-        }
-        .result-box {
-            background: #0f0f12;
-            border-radius: 16px;
-            padding: 18px 16px;
-            text-align: center;
-            border: 1px solid #2a2b30;
-            margin-top: 8px;
-        }
-        .result-box .score {
-            font-size: 48px;
-            font-weight: 800;
-            line-height: 1;
-            color: #fff;
-        }
-        .result-box .score.gold { color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.3); }
-        .result-box .rank {
-            font-size: 20px;
-            font-weight: 600;
-            margin-top: 4px;
-            color: #bbb;
-        }
-        .result-box .rank .emoji { font-size: 24px; vertical-align: middle; margin-right: 4px; }
-        .result-box .detail {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 6px 12px;
-            margin-top: 12px;
-            font-size: 13px;
-            color: #888;
-        }
-        .result-box .detail span { background:#1d1e22; padding:2px 10px; border-radius:16px; }
-        .result-box .detail .highlight { color:#3a86ff; }
-        .result-box .detail .highlight.purple { color:#8338ec; }
-
-        .hint {
-            font-size: 13px;
-            color: #888;
-            margin-top: 12px;
-            padding: 8px 12px;
-            background: #0f0f12;
-            border-radius: 10px;
-            border-left: 3px solid #3a86ff;
-        }
-        .hint .movie-item {
-            display: inline-block;
-            background: #1d1e22;
-            padding: 2px 10px;
-            border-radius: 12px;
-            margin: 2px 4px 2px 0;
-            font-size: 12px;
-            color: #ccc;
-        }
-
-        .actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 16px;
-        }
-        .actions button {
-            flex:1;
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .actions .save { background: #3a86ff; color:#fff; }
-        .actions .save:active { opacity:0.7; }
-        .actions .clear { background: #2a2b30; color:#aaa; }
-        .hidden { display: none !important; }
-        .footnote { font-size:11px; color:#555; text-align:center; margin-top:12px; }
-
-        /* ===== КОЛЛЕКЦИЯ ===== */
-        .collection-controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-        }
-        .collection-controls select,
-        .collection-controls input {
-            background: #0f0f12;
-            border: 1px solid #2a2b30;
-            border-radius: 8px;
-            color: #eee;
-            padding: 8px 12px;
-            font-size: 14px;
-            outline: none;
-        }
-        .collection-controls select:focus,
-        .collection-controls input:focus {
-            border-color: #3a86ff;
-        }
-        .collection-controls input[type="number"] {
-            width: 80px;
-        }
-        .collection-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .collection-item {
             display: flex;
             align-items: center;
             gap: 12px;
-            background: #0f0f12;
-            border-radius: 12px;
-            padding: 10px 14px;
-            border: 1px solid #1d1e22;
             cursor: pointer;
-            transition: background 0.1s;
+            transition: background 0.2s;
         }
-        .collection-item:active { background: #2a2b30; }
-        .collection-item img {
-            width: 40px;
-            height: 56px;
-            object-fit: cover;
-            border-radius: 6px;
-            background: #2a2b30;
+        .history-item:hover { background: #25262b; }
+        .history-item img { width: 40px; height: 56px; border-radius: 6px; object-fit: cover; }
+        .history-item-info { display: flex; flex-direction: column; gap: 2px; flex-grow: 1; pointer-events: none; }
+        .history-item-title { font-size: 1rem; font-weight: bold; line-height: 1.2; }
+        .history-item-artist { font-size: 0.8rem; color: var(--text-muted); }
+        .history-item-type { font-size: 0.7rem; background: #2c2d31; padding: 0 6px; border-radius: 4px; margin-left: 6px; text-transform: uppercase; }
+        .history-item-right { display: flex; align-items: center; gap: 16px; pointer-events: none; }
+        .history-item-score {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            transition: color 0.2s;
         }
-        .collection-item .info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .collection-item .info .title {
-            font-weight: 500;
-            font-size: 15px;
-        }
-        .collection-item .info .meta {
-            font-size: 13px;
-            color: #888;
-        }
-        .collection-item .right {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 2px;
-        }
-        .collection-item .right .score {
-            font-size: 18px;
-            font-weight: 700;
-        }
-        .collection-item .right .score.gold { color: #FFD700; }
-        .collection-item .right .status {
-            font-size: 12px;
-            color: #aaa;
-            background: #1d1e22;
+        .history-item-score.gold { color: var(--gold); }
+        .history-item-status {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: #2c2d31;
             padding: 0 8px;
             border-radius: 4px;
+        }
+        .delete-btn {
+            background: rgba(255, 71, 87, 0.1);
+            color: var(--red-accent);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            pointer-events: auto;
         }
-        .empty-text { color: #555; font-size: 14px; text-align: center; padding: 20px 0; }
+        .delete-btn:active { background: var(--red-accent); color: #fff; }
+        .empty-text { color: var(--text-muted); text-align: center; margin-top: 20px; font-size: 0.9rem; }
 
-        /* ===== МОДАЛЬНОЕ ОКНО ===== */
+        /* Нижнее меню */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #111113; border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0 20px 0; z-index: 100; }
+        .nav-btn { background: none; border: none; color: var(--text-muted); font-size: 1rem; font-weight: bold; padding: 10px 20px; cursor: pointer; border-radius: 20px; transition: 0.2s; }
+        .nav-btn.active { background: var(--card-bg); color: var(--blue-accent); }
+
+        .mode-toggle { display: flex; gap: 10px; margin: 8px 0; }
+        .mode-btn { flex: 1; background: #444; color: #fff; border: none; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        .mode-btn.active { background: var(--blue-accent); }
+        .mode-btn:active { transform: scale(0.95); }
+
+        /* Модальное окно деталей */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -393,8 +193,8 @@
         }
         .modal-overlay.active { display: flex; }
         .modal-content {
-            background: #1d1e22;
-            border: 1px solid #2a2b30;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
             border-radius: 16px;
             max-width: 480px;
             width: 100%;
@@ -407,7 +207,7 @@
             position: sticky;
             top: 0;
             float: right;
-            background: #2a2b30;
+            background: var(--card-bg);
             border: none;
             color: #fff;
             font-size: 1.5rem;
@@ -422,809 +222,870 @@
             z-index: 5;
         }
         .modal-close:active { transform: scale(0.9); }
-        .modal-header {
+        .modal-release-header {
             display: flex;
             gap: 12px;
             margin-bottom: 16px;
         }
-        .modal-header img {
+        .modal-release-header img {
             width: 60px;
             height: 80px;
-            object-fit: cover;
             border-radius: 8px;
-            background: #2a2b30;
+            object-fit: cover;
         }
-        .modal-header .info { flex:1; }
-        .modal-header .info .title { font-size: 1.1rem; font-weight: bold; }
-        .modal-header .info .meta { color: #888; font-size: 0.9rem; }
+        .modal-release-header .info { display: flex; flex-direction: column; gap: 2px; }
+        .modal-release-header .info .title { font-size: 1.1rem; font-weight: bold; }
+        .modal-release-header .info .artist { color: var(--blue-accent); font-size: 0.9rem; }
+        .modal-release-header .info .meta { color: var(--text-muted); font-size: 0.8rem; }
+
+        .modal-sliders .sliders-group {
+            border: none;
+            padding: 0;
+            background: transparent;
+            gap: 6px;
+        }
+        .modal-sliders .slider-container {
+            gap: 2px;
+        }
+        .modal-sliders .slider-header .value {
+            font-size: 1rem;
+        }
+        .modal-sliders .slider-header span:first-child {
+            font-size: 0.9rem;
+        }
+
         .modal-score {
-            font-size: 2.5rem;
-            font-weight: 800;
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--text-muted);
             text-align: center;
             margin: 12px 0;
+            transition: color 0.2s, text-shadow 0.2s;
         }
-        .modal-score.gold { color: #FFD700; }
-        .modal-status {
-            text-align: center;
-            font-size: 1.2rem;
-            color: #bbb;
-            margin-bottom: 12px;
-        }
-        .modal-sliders {
-            margin: 16px 0;
-        }
-        .modal-sliders .slider-item {
-            margin-bottom: 12px;
-        }
-        .modal-sliders .slider-item input[type="range"] {
-            width: 100%;
+        .modal-score.gold {
+            color: var(--gold) !important;
+            text-shadow: 0 0 40px rgba(255, 215, 0, 0.4) !important;
         }
         .modal-actions {
             display: flex;
             gap: 10px;
-            margin-top: 16px;
+            justify-content: center;
+            margin-top: 12px;
         }
-        .modal-actions button {
-            flex: 1;
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .modal-actions .edit-btn { background: #8338ec; color: #fff; }
-        .modal-actions .save-btn { background: #3a86ff; color: #fff; display: none; }
-        .modal-actions .delete-btn { background: #ff4757; color: #fff; }
+        .modal-actions .action-btn { flex: 1; }
+        .modal-actions .edit-btn { background: var(--purple-accent); color: #fff; }
+        .modal-actions .save-edit-btn { background: var(--blue-accent); color: #fff; display: none; }
+        .modal-actions .delete-btn { background: var(--red-accent); color: #fff; }
+        .edit-mode .modal-actions .save-edit-btn { display: block; }
         .edit-mode .modal-actions .edit-btn { display: none; }
-        .edit-mode .modal-actions .save-btn { display: block; }
+
+        /* Модальное окно критериев */
+        .criteria-content { padding: 8px 0; }
+        .criteria-content h3 {
+            color: var(--blue-accent);
+            margin: 12px 0 4px 0;
+            font-size: 1.1rem;
+        }
+        .criteria-content p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin: 0 0 8px 0;
+        }
+        .criteria-content .purple-title {
+            color: var(--purple-accent);
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <!-- ШАПКА с вкладками -->
-    <div class="header">
-        <h1>🎬 Оценка фильма</h1>
-        <div class="tabs">
-            <button class="active" data-tab="rate">Оценка</button>
-            <button data-tab="collection">Коллекция</button>
+    <!-- ВКЛАДКА 1: ОЦЕНКА -->
+    <div id="tab-rating" class="tab-content active">
+        <div class="mode-toggle">
+            <button id="mode-basic" class="mode-btn active">⭐ Базовая</button>
+            <button id="mode-extended" class="mode-btn">📊 Расширенная</button>
         </div>
-    </div>
-
-    <!-- ===== ВКЛАДКА ОЦЕНКИ ===== -->
-    <div id="tab-rate" class="tab-content active">
-        <div class="sub">Поиск через Кинопоиск Unofficial</div>
-
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Название фильма..." />
-            <button id="searchBtn">Найти</button>
+        <div class="search-container">
+            <input type="text" id="search-input" class="search-input" placeholder="Поиск фильма..." autocomplete="off">
+            <div id="search-results" class="search-results"></div>
         </div>
-        <div id="resultsContainer" class="results hidden"></div>
-
-        <div id="selectedContainer" class="selected hidden">
-            <img id="selectedPoster" src="" alt="постер" />
-            <div class="info">
-                <div class="title" id="selectedTitle">Название</div>
-                <div class="meta" id="selectedMeta">Год · Жанры</div>
-            </div>
-            <div class="type" id="selectedType">🎬 фильм</div>
-        </div>
-
-        <div class="mode-switch">
-            <button class="active" data-mode="basic" id="modeBasic">⭐ Базовая</button>
-            <button data-mode="extended" id="modeExtended">📊 Расширенная</button>
-        </div>
-
-        <!-- Базовый режим -->
-        <div id="basicMode">
-            <div class="slider-item">
-                <div class="label-row">
-                    <span>Оценка фильма</span>
-                    <span class="val" id="basicVal">5.0</span>
+        <div id="selected-release" class="selected-release-card">
+            <img id="release-img" src="" alt="Постер">
+            <div class="release-details">
+                <div id="release-title" class="release-title">Название</div>
+                <div id="release-artist" class="release-artist">Год · Жанры</div>
+                <div class="release-meta">
+                    <span id="release-type" class="badge">Фильм</span>
+                    <span id="release-extra"></span>
                 </div>
-                <input type="range" id="basicSlider" min="1" max="10" step="0.5" value="5" />
             </div>
-            <div id="basicHint" class="hint hidden">
-                <div style="margin-bottom:4px;">📽️ Фильмы с такой оценкой в вашей коллекции:</div>
-                <div id="basicHintList"></div>
+        </div>
+
+        <!-- Базовый режим (слайдеры) -->
+        <div id="basic-sliders" class="sliders-group blue-group">
+            <h2>
+                Оценка фильма
+                <button class="criteria-link" id="criteria-btn">Критерии оценки</button>
+            </h2>
+            <div class="slider-container">
+                <div class="slider-header"><span>Общая оценка</span><span class="value" id="basic-val">5.0</span></div>
+                <input type="range" id="basic-slider" min="1" max="10" step="0.5" value="5">
             </div>
+            <div id="basic-hint" style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;"></div>
         </div>
 
         <!-- Расширенный режим -->
-        <div id="extendedMode" class="hidden">
-            <div class="group-title"><span>Базовые (суммируются)</span><span>1–5</span></div>
-            <div class="slider-item">
-                <div class="label-row"><span>Сюжет и сценарий</span><span class="val" id="val-script">3.0</span></div>
-                <input type="range" id="script" min="1" max="5" step="0.5" value="3" />
+        <div id="extended-sliders" class="sliders-group blue-group" style="display:none;">
+            <h2>
+                Базовые показатели
+                <button class="criteria-link" id="criteria-btn-ext">Критерии оценки</button>
+            </h2>
+            <div class="slider-container">
+                <div class="slider-header"><span>Сюжет и сценарий</span><span class="value" id="val-script">3.0</span></div>
+                <input type="range" id="slider-script" min="1" max="5" step="0.5" value="3">
             </div>
-            <div class="slider-item">
-                <div class="label-row"><span>Актёрская игра</span><span class="val" id="val-acting">3.0</span></div>
-                <input type="range" id="acting" min="1" max="5" step="0.5" value="3" />
+            <div class="slider-container">
+                <div class="slider-header"><span>Актёрская игра</span><span class="value" id="val-acting">3.0</span></div>
+                <input type="range" id="slider-acting" min="1" max="5" step="0.5" value="3">
             </div>
-            <div class="slider-item">
-                <div class="label-row"><span>Режиссура</span><span class="val" id="val-directing">3.0</span></div>
-                <input type="range" id="directing" min="1" max="5" step="0.5" value="3" />
+            <div class="slider-container">
+                <div class="slider-header"><span>Режиссура</span><span class="value" id="val-directing">3.0</span></div>
+                <input type="range" id="slider-directing" min="1" max="5" step="0.5" value="3">
             </div>
-            <div class="group-title"><span>Множители</span><span>1–5 → коэф.</span></div>
-            <div class="slider-item">
-                <div class="label-row"><span>Визуал и операторская</span><span class="val purple" id="val-visual">3.0</span></div>
-                <input type="range" id="visual" min="1" max="5" step="1" value="3" class="purple-slider" />
+        </div>
+        <div id="extended-multipliers" class="sliders-group purple-group" style="display:none;">
+            <h2>Множители</h2>
+            <div class="slider-container">
+                <div class="slider-header"><span>Визуал и операторская</span><span class="value" id="val-visual">3.0</span></div>
+                <input type="range" id="slider-visual" min="1" max="5" step="1" value="3">
             </div>
-            <div class="slider-item">
-                <div class="label-row"><span>Саунд-дизайн и музыка</span><span class="val purple" id="val-sound">3.0</span></div>
-                <input type="range" id="sound" min="1" max="5" step="1" value="3" class="purple-slider" />
+            <div class="slider-container">
+                <div class="slider-header"><span>Саунд-дизайн и музыка</span><span class="value" id="val-sound">3.0</span></div>
+                <input type="range" id="slider-sound" min="1" max="5" step="1" value="3">
             </div>
-            <div class="slider-item">
-                <div class="label-row"><span>Актуальность / Смысл</span><span class="val purple" id="val-relevance">3.0</span></div>
-                <input type="range" id="relevance" min="1" max="5" step="1" value="3" class="purple-slider" />
+            <div class="slider-container">
+                <div class="slider-header"><span>Актуальность / Смысл</span><span class="value" id="val-relevance">3.0</span></div>
+                <input type="range" id="slider-relevance" min="1" max="5" step="1" value="3">
             </div>
-            <div class="result-box">
-                <div class="score" id="scoreDisplay">16.20</div>
-                <div class="rank" id="rankDisplay"><span class="emoji">💎</span> Изумрудный фильм</div>
-                <div class="detail">
-                    <span>Базовые: <span id="baseSum" class="highlight">9.0</span></span>
-                    <span>Визуал: <span id="coefVisual" class="highlight purple">1.03</span></span>
-                    <span>Саунд: <span id="coefSound" class="highlight purple">1.03</span></span>
-                    <span>Актуальность: <span id="coefRelevance" class="highlight purple">1.03</span></span>
+            <div class="result-box" style="background:var(--card-bg); border-radius:12px; padding:12px; margin-top:8px; text-align:center;">
+                <div style="font-size:1.2rem; font-weight:bold;" id="extended-score">16.20</div>
+                <div style="font-size:0.9rem; color:var(--text-muted);" id="extended-rank">💎 Изумрудный фильм</div>
+                <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; font-size:0.7rem; color:var(--text-muted); margin-top:6px;">
+                    <span>Базовые: <span id="base-sum">9.0</span></span>
+                    <span>Визуал: <span id="coef-visual">1.03</span></span>
+                    <span>Саунд: <span id="coef-sound">1.03</span></span>
+                    <span>Актуальность: <span id="coef-relevance">1.03</span></span>
                 </div>
             </div>
         </div>
 
-        <div class="actions">
-            <button class="save" id="saveBtn">💾 Сохранить</button>
-            <button class="clear" id="clearBtn">🗑️ Очистить</button>
+        <div class="footer-score">
+            <div class="score-display" id="score-display">
+                <span class="total" id="total-score">5.0</span><span class="slash"> / 10</span>
+            </div>
+            <button class="action-btn save-btn" id="save-btn">💾 Сохранить</button>
         </div>
-        <div class="footnote">Ранги: 🥈 0–5.99 · 🥇 6–11.99 · 💎 12–17.99 · 🔷 18–23.99 · 🔴 24–30</div>
     </div>
 
-    <!-- ===== ВКЛАДКА КОЛЛЕКЦИЯ ===== -->
+    <!-- ВКЛАДКА 2: КОЛЛЕКЦИЯ -->
     <div id="tab-collection" class="tab-content">
         <div class="collection-controls">
-            <input type="text" id="collectionSearch" placeholder="Поиск в коллекции..." class="search-input" style="flex:1;" />
-            <select id="collectionSort">
-                <option value="newest">Сначала новые</option>
-                <option value="oldest">Сначала старые</option>
-                <option value="high">По убыванию балла</option>
-                <option value="low">По возрастанию балла</option>
+            <input type="text" id="collection-search" class="collection-search" placeholder="Поиск в коллекции..." autocomplete="off">
+            <select id="collection-sort" class="collection-sort">
+                <option value="newest">Сначала новые (по дате добавления)</option>
+                <option value="highest">Сначала высокие баллы</option>
+                <option value="lowest">Сначала низкие баллы</option>
             </select>
-            <input type="number" id="collectionFilter" placeholder="Оценка" min="1" max="10" step="0.5" />
         </div>
-        <div id="collectionList" class="collection-list">
-            <div class="empty-text">Пока нет оценок</div>
-        </div>
+        <div id="collection-list" class="history-list"></div>
     </div>
-</div>
 
-<!-- ===== МОДАЛЬНОЕ ОКНО ===== -->
-<div id="modalOverlay" class="modal-overlay">
-    <div class="modal-content" id="modalContent">
-        <button class="modal-close" id="modalClose">✕</button>
-        <div class="modal-header">
-            <img id="modalPoster" src="" alt="постер" />
-            <div class="info">
-                <div class="title" id="modalTitle">Название</div>
-                <div class="meta" id="modalMeta">Год · Тип</div>
+    <!-- НИЖНЕЕ МЕНЮ -->
+    <div class="bottom-nav">
+        <button class="nav-btn active" data-tab="rating">Оценка</button>
+        <button class="nav-btn" data-tab="collection">Моя коллекция</button>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close-btn">✕</button>
+            <div class="modal-release-header">
+                <img id="modal-img" src="" alt="Постер">
+                <div class="info">
+                    <div class="title" id="modal-title">Название</div>
+                    <div class="artist" id="modal-artist">Год</div>
+                    <div class="meta" id="modal-meta">Фильм</div>
+                </div>
+            </div>
+            <div class="modal-sliders" id="modal-sliders-container">
+                <!-- сюда динамически вставляются слайдеры -->
+            </div>
+            <div class="modal-score" id="modal-score">—</div>
+            <div class="modal-actions">
+                <button class="action-btn edit-btn" id="modal-edit-btn">✏️ Изменить</button>
+                <button class="action-btn save-edit-btn" id="modal-save-edit-btn" style="display:none;">💾 Сохранить</button>
+                <button class="action-btn delete-btn" id="modal-delete-btn">🗑️ Удалить</button>
             </div>
         </div>
-        <div class="modal-score" id="modalScore">8.5/10</div>
-        <div class="modal-status" id="modalStatus">—</div>
-        <div class="modal-sliders" id="modalSliders"></div>
-        <div class="modal-actions" id="modalActions">
-            <button class="edit-btn" id="modalEditBtn">✏️ Изменить</button>
-            <button class="save-btn" id="modalSaveBtn">💾 Сохранить</button>
-            <button class="delete-btn" id="modalDeleteBtn">🗑️ Удалить</button>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО КРИТЕРИЕВ -->
+    <div id="criteria-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="criteria-close-btn">✕</button>
+            <h2 style="margin-top:0; color:var(--gold);">Критерии оценки фильма</h2>
+            <div class="criteria-content">
+                <h3>1. Сюжет и сценарий</h3>
+                <p>Оригинальность, логика, диалоги, проработка персонажей, неожиданные повороты.</p>
+                <h3>2. Актёрская игра</h3>
+                <p>Убедительность, эмоциональная отдача, харизма, взаимодействие в кадре.</p>
+                <h3>3. Режиссура</h3>
+                <p>Драматургия, темп, работа с актёрами, общее видение, монтаж.</p>
+                <h3 class="purple-title">4. Визуал и операторская работа</h3>
+                <p>Кадр, свет, цвет, композиция, декорации, костюмы, визуальные эффекты.</p>
+                <h3 class="purple-title">5. Саунд-дизайн и музыка</h3>
+                <p>Музыкальное сопровождение, звуковые эффекты, атмосфера, работа со звуком.</p>
+                <h3 class="purple-title">6. Актуальность / Смысл</h3>
+                <p>Насколько фильм важен здесь и сейчас, поднимает ли важные темы, даёт ли пищу для размышлений, эмоциональный отклик.</p>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    // ================================================================
-    //  1. API КЛЮЧ КИНОПОИСКА
-    // ================================================================
-    const KP_API_KEY = 'ee7d5979-e5d4-4387-854f-46f5f109036f';
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-    // ================================================================
-    //  2. ИНИЦИАЛИЗАЦИЯ TELEGRAM WEB APP
-    // ================================================================
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+        // ============================================
+        // 1. РАБОТА С ХРАНИЛИЩЕМ
+        // ============================================
+        const STORAGE_KEY = 'rzt_cinema_history';
 
-    // ================================================================
-    //  3. РАБОТА С CLOUDSTORAGE
-    // ================================================================
-    const STORAGE_KEY = 'rzt_cinema_history';
-
-    function cloudGet(key) {
-        return new Promise((resolve) => {
-            tg.CloudStorage.getItem(key, (err, value) => {
-                if (err) resolve(null);
-                else resolve(value);
-            });
-        });
-    }
-
-    function cloudSet(key, value) {
-        return new Promise((resolve) => {
-            tg.CloudStorage.setItem(key, value, (err) => {
-                resolve(!err);
-            });
-        });
-    }
-
-    async function loadCollection() {
-        try {
-            const data = await cloudGet(STORAGE_KEY);
-            return data ? JSON.parse(data) : [];
-        } catch { return []; }
-    }
-
-    async function saveCollection(collection) {
-        await cloudSet(STORAGE_KEY, JSON.stringify(collection));
-        renderCollection();
-        updateHints();
-    }
-
-    // ================================================================
-    //  4. API КИНОПОИСКА
-    // ================================================================
-    async function searchKinopoisk(query) {
-        const url = `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}&page=1`;
-        const resp = await fetch(url, {
-            headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
-        });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-        return data.films.map(f => ({
-            id: f.filmId,
-            title: f.nameRu || f.nameEn || f.nameOriginal || 'Без названия',
-            year: f.year || 'Неизвестно',
-            image: f.posterUrlPreview || '',
-            rating: f.rating || 0,
-        }));
-    }
-
-    async function getFilmDetails(filmId) {
-        const url = `https://kinopoiskapiunofficial.tech/api/v2.2/films/${filmId}`;
-        const resp = await fetch(url, {
-            headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
-        });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-        const genres = data.genres || [];
-        const isCartoon = genres.some(g => g.genre.includes('мультфильм') || g.genre.includes('анимация'));
-        return {
-            genres: genres.map(g => g.genre).join(', '),
-            isCartoon: isCartoon,
-            description: data.description || '',
-            year: data.year || 'Неизвестно',
-            poster: data.posterUrl || '',
-        };
-    }
-
-    // ================================================================
-    //  5. ОТОБРАЖЕНИЕ КОЛЛЕКЦИИ
-    // ================================================================
-    async function renderCollection() {
-        const list = document.getElementById('collectionList');
-        const searchQuery = document.getElementById('collectionSearch').value.toLowerCase();
-        const sortMode = document.getElementById('collectionSort').value;
-        const filterScore = parseFloat(document.getElementById('collectionFilter').value);
-
-        let items = await loadCollection();
-
-        if (searchQuery) {
-            items = items.filter(item =>
-                item.title.toLowerCase().includes(searchQuery) ||
-                (item.year && item.year.toString().includes(searchQuery))
-            );
-        }
-        if (!isNaN(filterScore) && filterScore > 0) {
-            items = items.filter(item => Math.abs(item.score - filterScore) < 0.01);
-        }
-
-        if (sortMode === 'newest') items.sort((a, b) => b.id - a.id);
-        else if (sortMode === 'oldest') items.sort((a, b) => a.id - b.id);
-        else if (sortMode === 'high') items.sort((a, b) => b.score - a.score);
-        else if (sortMode === 'low') items.sort((a, b) => a.score - b.score);
-
-        if (items.length === 0) {
-            list.innerHTML = '<div class="empty-text">Ничего не найдено</div>';
-            return;
-        }
-
-        list.innerHTML = items.map(item => {
-            let scoreDisplay = '';
-            let statusText = '';
-            let scoreClass = '';
-            let emoji = '';
-            if (item.mode === 'basic') {
-                scoreDisplay = `${item.score.toFixed(1)}/10`;
-                statusText = 'Базовая';
-            } else {
-                scoreDisplay = `${item.score.toFixed(2)}`;
-                const rank = getRank(item.score);
-                emoji = rank.emoji;
-                statusText = rank.label;
-                if (item.score >= 24) scoreClass = 'gold';
-            }
-            const image = item.image || 'https://via.placeholder.com/40';
-            return `
-                <div class="collection-item" data-id="${item.id}">
-                    <img src="${image}" alt="постер" />
-                    <div class="info">
-                        <div class="title">${item.title}</div>
-                        <div class="meta">${item.year || 'н/д'} · ${item.type === 'cartoon' ? 'Мультфильм' : 'Фильм'}</div>
-                    </div>
-                    <div class="right">
-                        <div class="score ${scoreClass}">${scoreDisplay}</div>
-                        ${statusText ? `<div class="status">${emoji} ${statusText}</div>` : ''}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        document.querySelectorAll('.collection-item').forEach(el => {
-            el.addEventListener('click', function() {
-                const id = parseInt(this.dataset.id);
-                openModal(id);
-            });
-        });
-    }
-
-    // ================================================================
-    //  6. ПОДСКАЗКИ
-    // ================================================================
-    async function updateHints() {
-        const basicVal = parseFloat(document.getElementById('basicSlider').value);
-        const coll = await loadCollection();
-        const similar = coll
-            .filter(item => item.mode === 'basic' && Math.abs(item.score - basicVal) < 0.75)
-            .slice(0, 5);
-        const hintBlock = document.getElementById('basicHint');
-        const hintList = document.getElementById('basicHintList');
-        if (similar.length === 0) {
-            hintBlock.classList.add('hidden');
-            return;
-        }
-        hintBlock.classList.remove('hidden');
-        hintList.innerHTML = similar.map(item =>
-            `<span class="movie-item">${item.title} (${item.score.toFixed(1)})</span>`
-        ).join('');
-    }
-
-    // ================================================================
-    //  7. РАНГИ И ФОРМУЛА
-    // ================================================================
-    const ranks = [
-        { min: 0.34, max: 5.99, label: 'Серебряный', emoji: '🥈' },
-        { min: 6, max: 11.99, label: 'Золотой', emoji: '🥇' },
-        { min: 12, max: 17.99, label: 'Изумрудный', emoji: '💎' },
-        { min: 18, max: 23.99, label: 'Сапфировый', emoji: '🔷' },
-        { min: 24, max: 30, label: 'Рубиновый', emoji: '🔴' }
-    ];
-
-    function getRank(score) {
-        for (let r of ranks) if (score >= r.min && score <= r.max) return r;
-        return ranks[0];
-    }
-
-    function getCoef(val) { return 0.80 + (val - 1) * 0.115; }
-
-    // ================================================================
-    //  8. МОДАЛЬНОЕ ОКНО
-    // ================================================================
-    let currentModalItemId = null;
-    let isEditMode = false;
-
-    async function openModal(id) {
-        const coll = await loadCollection();
-        const item = coll.find(el => el.id === id);
-        if (!item) return;
-
-        currentModalItemId = id;
-        isEditMode = false;
-
-        // Заполняем заголовок
-        document.getElementById('modalPoster').src = item.image || 'https://via.placeholder.com/60';
-        document.getElementById('modalTitle').textContent = item.title;
-        document.getElementById('modalMeta').textContent = `${item.year || 'н/д'} · ${item.type === 'cartoon' ? 'Мультфильм' : 'Фильм'}`;
-
-        // Блок слайдеров
-        const slidersContainer = document.getElementById('modalSliders');
-        slidersContainer.innerHTML = '';
-
-        if (item.mode === 'basic') {
-            // Базовая: один слайдер
-            const score = item.score;
-            document.getElementById('modalScore').textContent = `${score.toFixed(1)} / 10`;
-            document.getElementById('modalScore').className = 'modal-score';
-            document.getElementById('modalStatus').textContent = 'Базовая оценка';
-
-            const div = document.createElement('div');
-            div.className = 'slider-item';
-            div.innerHTML = `
-                <div class="label-row">
-                    <span>Оценка фильма</span>
-                    <span class="val" id="modalBasicVal">${score.toFixed(1)}</span>
-                </div>
-                <input type="range" id="modalBasicSlider" min="1" max="10" step="0.5" value="${score}" disabled />
-            `;
-            slidersContainer.appendChild(div);
-            // Сохраним ссылку для редактирования
-            slidersContainer.dataset.mode = 'basic';
-        } else {
-            // Расширенная: 6 слайдеров
-            const sl = item.sliders || { script: 0, acting: 0, directing: 0, visual: 0, sound: 0, relevance: 0 };
-            const rank = getRank(item.score);
-            document.getElementById('modalScore').textContent = `${item.score.toFixed(2)}`;
-            document.getElementById('modalScore').className = 'modal-score' + (item.score >= 24 ? ' gold' : '');
-            document.getElementById('modalStatus').textContent = `${rank.emoji} ${rank.label}`;
-
-            const fields = [
-                { id: 'script', label: 'Сюжет и сценарий', value: sl.script, min: 1, max: 5, step: 0.5, cls: '' },
-                { id: 'acting', label: 'Актёрская игра', value: sl.acting, min: 1, max: 5, step: 0.5, cls: '' },
-                { id: 'directing', label: 'Режиссура', value: sl.directing, min: 1, max: 5, step: 0.5, cls: '' },
-                { id: 'visual', label: 'Визуал и операторская', value: sl.visual, min: 1, max: 5, step: 1, cls: 'purple-slider' },
-                { id: 'sound', label: 'Саунд-дизайн и музыка', value: sl.sound, min: 1, max: 5, step: 1, cls: 'purple-slider' },
-                { id: 'relevance', label: 'Актуальность / Смысл', value: sl.relevance, min: 1, max: 5, step: 1, cls: 'purple-slider' }
-            ];
-
-            fields.forEach(f => {
-                const div = document.createElement('div');
-                div.className = 'slider-item';
-                div.innerHTML = `
-                    <div class="label-row">
-                        <span>${f.label}</span>
-                        <span class="val ${f.cls.includes('purple') ? 'purple' : ''}" id="modalVal_${f.id}">${f.value}</span>
-                    </div>
-                    <input type="range" id="modalSlider_${f.id}" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.value}" class="${f.cls}" disabled />
-                `;
-                slidersContainer.appendChild(div);
-            });
-            slidersContainer.dataset.mode = 'extended';
-        }
-
-        // Сброс режима редактирования
-        document.getElementById('modalContent').classList.remove('edit-mode');
-        document.getElementById('modalEditBtn').style.display = 'block';
-        document.getElementById('modalSaveBtn').style.display = 'none';
-        isEditMode = false;
-
-        document.getElementById('modalOverlay').classList.add('active');
-    }
-
-    // Закрытие модалки
-    document.getElementById('modalClose').addEventListener('click', () => {
-        document.getElementById('modalOverlay').classList.remove('active');
-    });
-    document.getElementById('modalOverlay').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) document.getElementById('modalOverlay').classList.remove('active');
-    });
-
-    // ================================================================
-    //  9. РЕДАКТИРОВАНИЕ В МОДАЛКЕ
-    // ================================================================
-    document.getElementById('modalEditBtn').addEventListener('click', function() {
-        if (!currentModalItemId) return;
-        isEditMode = true;
-
-        // Разблокируем все слайдеры в модалке
-        document.querySelectorAll('#modalSliders input[type="range"]').forEach(inp => inp.disabled = false);
-        document.getElementById('modalContent').classList.add('edit-mode');
-        this.style.display = 'none';
-        document.getElementById('modalSaveBtn').style.display = 'block';
-    });
-
-    document.getElementById('modalSaveBtn').addEventListener('click', async function() {
-        if (!currentModalItemId) return;
-
-        const coll = await loadCollection();
-        const item = coll.find(el => el.id === currentModalItemId);
-        if (!item) return;
-
-        const mode = document.getElementById('modalSliders').dataset.mode;
-
-        if (mode === 'basic') {
-            const slider = document.getElementById('modalBasicSlider');
-            const newScore = parseFloat(slider.value);
-            item.score = newScore;
-        } else {
-            // Расширенная: собираем значения
-            const sliders = {};
-            const ids = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
-            ids.forEach(id => {
-                const inp = document.getElementById(`modalSlider_${id}`);
-                sliders[id] = parseFloat(inp.value);
-            });
-            // Пересчитываем балл
-            const base = sliders.script + sliders.acting + sliders.directing;
-            const kVisual = getCoef(sliders.visual);
-            const kSound = getCoef(sliders.sound);
-            const kRelevance = getCoef(sliders.relevance);
-            let score = base * kVisual * kSound * kRelevance;
-            score = Math.min(Math.round(score * 100) / 100, 30);
-            item.score = score;
-            item.rank = getRank(score).label;
-            item.sliders = sliders;
-        }
-
-        // Сохраняем изменения
-        await saveCollection(coll);
-
-        // Обновляем модалку (переоткрываем)
-        await openModal(currentModalItemId);
-        tg.showAlert('Оценка обновлена!');
-        renderCollection();
-        updateHints();
-    });
-
-    // ================================================================
-    //  10. УДАЛЕНИЕ ИЗ МОДАЛКИ
-    // ================================================================
-    document.getElementById('modalDeleteBtn').addEventListener('click', async function() {
-        if (!currentModalItemId) return;
-        tg.showConfirm('Удалить эту оценку?', async (confirmed) => {
-            if (confirmed) {
-                let coll = await loadCollection();
-                coll = coll.filter(item => item.id !== currentModalItemId);
-                await saveCollection(coll);
-                document.getElementById('modalOverlay').classList.remove('active');
-                renderCollection();
-                updateHints();
-            }
-        });
-    });
-
-    // ================================================================
-    //  11. ОСНОВНАЯ ЛОГИКА (поиск, выбор, сохранение)
-    // ================================================================
-    let selectedFilm = null;
-    let currentMode = 'basic';
-
-    async function performSearch() {
-        const query = document.getElementById('searchInput').value.trim();
-        if (!query) return;
-        const container = document.getElementById('resultsContainer');
-        container.innerHTML = '<div style="padding:12px; color:#888;">Загрузка...</div>';
-        container.classList.remove('hidden');
-
-        try {
-            const films = await searchKinopoisk(query);
-            if (films.length === 0) {
-                container.innerHTML = '<div style="padding:12px; color:#888;">Ничего не найдено</div>';
-                return;
-            }
-            const enriched = await Promise.all(films.map(async f => {
-                try {
-                    const details = await getFilmDetails(f.id);
-                    return { ...f, ...details };
-                } catch {
-                    return { ...f, genres: 'Неизвестно', isCartoon: false };
-                }
-            }));
-
-            container.innerHTML = enriched.map(f => `
-                <div class="item" data-id="${f.id}">
-                    <img src="${f.image || ''}" alt="постер" />
-                    <div class="info">
-                        <div class="title">${f.title}</div>
-                        <div class="year">${f.year} · ${f.genres || '—'}</div>
-                    </div>
-                    <div class="badge ${f.isCartoon ? 'cartoon' : ''}">${f.isCartoon ? '🎨 Мульт' : '🎬 Фильм'}</div>
-                </div>
-            `).join('');
-
-            document.querySelectorAll('.results .item').forEach(el => {
-                el.addEventListener('click', () => {
-                    const id = parseInt(el.dataset.id);
-                    const film = enriched.find(f => f.id === id);
-                    if (film) selectFilm(film);
+        function cloudGet(key) {
+            return new Promise((resolve) => {
+                tg.CloudStorage.getItem(key, (err, value) => {
+                    if (err) resolve(null);
+                    else resolve(value);
                 });
             });
-        } catch (err) {
-            container.innerHTML = `<div style="padding:12px; color:#ff6b6b;">Ошибка: ${err.message}</div>`;
         }
-    }
-
-    function selectFilm(film) {
-        selectedFilm = film;
-        document.getElementById('resultsContainer').classList.add('hidden');
-
-        const container = document.getElementById('selectedContainer');
-        container.classList.remove('hidden');
-        document.getElementById('selectedPoster').src = film.image || '';
-        document.getElementById('selectedTitle').textContent = film.title;
-        document.getElementById('selectedMeta').textContent = `${film.year} · ${film.genres || '—'}`;
-        document.getElementById('selectedType').textContent = film.isCartoon ? '🎨 Мультфильм' : '🎬 Фильм';
-
-        const modeBasic = document.getElementById('modeBasic');
-        const modeExtended = document.getElementById('modeExtended');
-        if (film.isCartoon) {
-            modeExtended.disabled = true;
-            modeExtended.classList.remove('active');
-            modeBasic.classList.add('active');
-            currentMode = 'basic';
-            switchMode('basic');
-        } else {
-            modeExtended.disabled = false;
-            if (currentMode === 'extended') {
-                modeExtended.classList.add('active');
-                modeBasic.classList.remove('active');
-                switchMode('extended');
-            } else {
-                modeBasic.classList.add('active');
-                modeExtended.classList.remove('active');
-                switchMode('basic');
-            }
-        }
-    }
-
-    function switchMode(mode) {
-        currentMode = mode;
-        document.getElementById('basicMode').classList.toggle('hidden', mode !== 'basic');
-        document.getElementById('extendedMode').classList.toggle('hidden', mode !== 'extended');
-    }
-
-    async function saveCurrent() {
-        if (!selectedFilm) {
-            tg.showAlert('Сначала выберите фильм');
-            return;
-        }
-        const coll = await loadCollection();
-        const item = {
-            id: selectedFilm.id,
-            title: selectedFilm.title,
-            year: selectedFilm.year,
-            image: selectedFilm.image,
-            type: selectedFilm.isCartoon ? 'cartoon' : 'movie',
-            mode: currentMode,
-            score: 0,
-            rank: null,
-        };
-
-        if (currentMode === 'basic') {
-            const score = parseFloat(document.getElementById('basicSlider').value);
-            item.score = score;
-        } else {
-            const script = parseFloat(document.getElementById('script').value);
-            const acting = parseFloat(document.getElementById('acting').value);
-            const directing = parseFloat(document.getElementById('directing').value);
-            const visual = parseFloat(document.getElementById('visual').value);
-            const sound = parseFloat(document.getElementById('sound').value);
-            const relevance = parseFloat(document.getElementById('relevance').value);
-            const base = script + acting + directing;
-            const score = Math.min(Math.round(base * getCoef(visual) * getCoef(sound) * getCoef(relevance) * 100) / 100, 30);
-            item.score = score;
-            item.rank = getRank(score).label;
-            item.sliders = { script, acting, directing, visual, sound, relevance };
+        function cloudSet(key, value) {
+            return new Promise((resolve) => {
+                tg.CloudStorage.setItem(key, value, (err) => {
+                    resolve(!err);
+                });
+            });
         }
 
-        if (coll.some(el => el.id === item.id)) {
-            tg.showAlert('Этот фильм уже есть в коллекции!');
-            return;
+        async function loadCollection() {
+            try {
+                const data = await cloudGet(STORAGE_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch { return []; }
         }
-        coll.push(item);
-        await saveCollection(coll);
-        tg.showAlert('Оценка сохранена!');
-        renderCollection();
-        updateHints();
-    }
 
-    async function clearAll() {
-        tg.showConfirm('Удалить все оценки из коллекции?', async (confirmed) => {
-            if (confirmed) {
-                await cloudSet(STORAGE_KEY, JSON.stringify([]));
-                renderCollection();
-                updateHints();
-            }
-        });
-    }
+        async function saveCollection(collection) {
+            await cloudSet(STORAGE_KEY, JSON.stringify(collection));
+            renderCollection();
+            updateBasicHint();
+        }
 
-    // ================================================================
-    //  12. ОБНОВЛЕНИЕ РАСШИРЕННОЙ ОЦЕНКИ НА ВКЛАДКЕ
-    // ================================================================
-    function updateExtended() {
-        const script = parseFloat(document.getElementById('script').value);
-        const acting = parseFloat(document.getElementById('acting').value);
-        const directing = parseFloat(document.getElementById('directing').value);
-        const visual = parseFloat(document.getElementById('visual').value);
-        const sound = parseFloat(document.getElementById('sound').value);
-        const relevance = parseFloat(document.getElementById('relevance').value);
+        // ============================================
+        // 2. API КИНОПОИСКА
+        // ============================================
+        const KP_API_KEY = 'ee7d5979-e5d4-4387-854f-46f5f109036f';
 
-        document.getElementById('val-script').textContent = script.toFixed(1);
-        document.getElementById('val-acting').textContent = acting.toFixed(1);
-        document.getElementById('val-directing').textContent = directing.toFixed(1);
-        document.getElementById('val-visual').textContent = visual.toFixed(1);
-        document.getElementById('val-sound').textContent = sound.toFixed(1);
-        document.getElementById('val-relevance').textContent = relevance.toFixed(1);
+        async function searchKinopoisk(query) {
+            const url = `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}&page=1`;
+            const resp = await fetch(url, {
+                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            return data.films.map(f => ({
+                id: f.filmId,
+                title: f.nameRu || f.nameEn || f.nameOriginal || 'Без названия',
+                year: f.year || 'Неизвестно',
+                image: f.posterUrlPreview || '',
+                rating: f.rating || 0,
+            }));
+        }
 
-        const base = script + acting + directing;
-        const kVisual = getCoef(visual);
-        const kSound = getCoef(sound);
-        const kRelevance = getCoef(relevance);
-        let score = base * kVisual * kSound * kRelevance;
-        score = Math.min(Math.round(score * 100) / 100, 30);
+        async function getFilmDetails(filmId) {
+            const url = `https://kinopoiskapiunofficial.tech/api/v2.2/films/${filmId}`;
+            const resp = await fetch(url, {
+                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            const genres = data.genres || [];
+            const isCartoon = genres.some(g => g.genre.includes('мультфильм') || g.genre.includes('анимация'));
+            return {
+                genres: genres.map(g => g.genre).join(', '),
+                isCartoon: isCartoon,
+                year: data.year || 'Неизвестно',
+                poster: data.posterUrl || '',
+            };
+        }
 
-        document.getElementById('baseSum').textContent = base.toFixed(1);
-        document.getElementById('coefVisual').textContent = kVisual.toFixed(3);
-        document.getElementById('coefSound').textContent = kSound.toFixed(3);
-        document.getElementById('coefRelevance').textContent = kRelevance.toFixed(3);
+        // ============================================
+        // 3. ОСНОВНАЯ ЛОГИКА ПРИЛОЖЕНИЯ
+        // ============================================
+        let selectedFilm = null;
+        let currentMode = 'basic'; // basic или extended
+        let historyData = [];
 
-        const scoreEl = document.getElementById('scoreDisplay');
-        scoreEl.textContent = score.toFixed(2);
-        scoreEl.classList.toggle('gold', score >= 24);
-
-        const rank = getRank(score);
-        document.getElementById('rankDisplay').innerHTML =
-            `<span class="emoji">${rank.emoji}</span> ${rank.label} фильм`;
-    }
-
-    // ================================================================
-    //  13. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
-    // ================================================================
-    document.querySelectorAll('.tabs button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            const tab = this.dataset.tab;
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tab).classList.add('active');
-            if (tab === 'collection') renderCollection();
-        });
-    });
-
-    // ================================================================
-    //  14. ИНИЦИАЛИЗАЦИЯ
-    // ================================================================
-    document.addEventListener('DOMContentLoaded', async () => {
-        // Поиск
-        document.getElementById('searchBtn').addEventListener('click', performSearch);
-        document.getElementById('searchInput').addEventListener('keyup', e => {
-            if (e.key === 'Enter') performSearch();
-        });
+        // Элементы
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const selectedRelease = document.getElementById('selected-release');
+        const releaseImg = document.getElementById('release-img');
+        const releaseTitle = document.getElementById('release-title');
+        const releaseArtist = document.getElementById('release-artist');
+        const releaseType = document.getElementById('release-type');
+        const releaseExtra = document.getElementById('release-extra');
 
         // Режимы
-        document.getElementById('modeBasic').addEventListener('click', () => {
-            if (selectedFilm && selectedFilm.isCartoon) return;
-            document.getElementById('modeBasic').classList.add('active');
-            document.getElementById('modeExtended').classList.remove('active');
-            switchMode('basic');
-        });
-        document.getElementById('modeExtended').addEventListener('click', () => {
+        const modeBasicBtn = document.getElementById('mode-basic');
+        const modeExtendedBtn = document.getElementById('mode-extended');
+        const basicSliders = document.getElementById('basic-sliders');
+        const extendedSliders = document.getElementById('extended-sliders');
+        const extendedMultipliers = document.getElementById('extended-multipliers');
+
+        // Базовый слайдер
+        const basicSlider = document.getElementById('basic-slider');
+        const basicVal = document.getElementById('basic-val');
+        const basicHint = document.getElementById('basic-hint');
+
+        // Расширенные слайдеры
+        const sliders = {
+            script: document.getElementById('slider-script'),
+            acting: document.getElementById('slider-acting'),
+            directing: document.getElementById('slider-directing'),
+            visual: document.getElementById('slider-visual'),
+            sound: document.getElementById('slider-sound'),
+            relevance: document.getElementById('slider-relevance')
+        };
+        const valDisplays = {
+            script: document.getElementById('val-script'),
+            acting: document.getElementById('val-acting'),
+            directing: document.getElementById('val-directing'),
+            visual: document.getElementById('val-visual'),
+            sound: document.getElementById('val-sound'),
+            relevance: document.getElementById('val-relevance')
+        };
+        const extendedScore = document.getElementById('extended-score');
+        const extendedRank = document.getElementById('extended-rank');
+        const baseSum = document.getElementById('base-sum');
+        const coefVisual = document.getElementById('coef-visual');
+        const coefSound = document.getElementById('coef-sound');
+        const coefRelevance = document.getElementById('coef-relevance');
+
+        // Балл и кнопка сохранения
+        const scoreDisplay = document.getElementById('score-display');
+        const totalScore = document.getElementById('total-score');
+
+        // Ранги
+        const ranks = [
+            { min: 0.34, max: 5.99, label: 'Серебряный', emoji: '🥈' },
+            { min: 6, max: 11.99, label: 'Золотой', emoji: '🥇' },
+            { min: 12, max: 17.99, label: 'Изумрудный', emoji: '💎' },
+            { min: 18, max: 23.99, label: 'Сапфировый', emoji: '🔷' },
+            { min: 24, max: 30, label: 'Рубиновый', emoji: '🔴' }
+        ];
+
+        function getRank(score) {
+            for (let r of ranks) if (score >= r.min && score <= r.max) return r;
+            return ranks[0];
+        }
+
+        function getCoef(val) { return 0.80 + (val - 1) * 0.115; }
+
+        // Переключение режимов
+        modeBasicBtn.addEventListener('click', function() {
             if (selectedFilm && selectedFilm.isCartoon) {
                 tg.showAlert('Для мультфильмов доступна только базовая оценка');
                 return;
             }
-            document.getElementById('modeExtended').classList.add('active');
-            document.getElementById('modeBasic').classList.remove('active');
-            switchMode('extended');
+            currentMode = 'basic';
+            modeBasicBtn.classList.add('active');
+            modeExtendedBtn.classList.remove('active');
+            basicSliders.style.display = 'block';
+            extendedSliders.style.display = 'none';
+            extendedMultipliers.style.display = 'none';
+            updateScoreDisplay();
         });
 
-        // Слайдеры на вкладке оценки
-        document.getElementById('basicSlider').addEventListener('input', () => {
-            const val = parseFloat(document.getElementById('basicSlider').value);
-            document.getElementById('basicVal').textContent = val.toFixed(1);
-            updateHints();
+        modeExtendedBtn.addEventListener('click', function() {
+            if (selectedFilm && selectedFilm.isCartoon) {
+                tg.showAlert('Для мультфильмов доступна только базовая оценка');
+                return;
+            }
+            currentMode = 'extended';
+            modeExtendedBtn.classList.add('active');
+            modeBasicBtn.classList.remove('active');
+            basicSliders.style.display = 'none';
+            extendedSliders.style.display = 'block';
+            extendedMultipliers.style.display = 'block';
+            updateScoreDisplay();
         });
-        ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'].forEach(id => {
-            document.getElementById(id).addEventListener('input', updateExtended);
+
+        // Обновление отображения счёта
+        function updateScoreDisplay() {
+            if (currentMode === 'basic') {
+                const val = parseFloat(basicSlider.value);
+                totalScore.textContent = val.toFixed(1);
+                document.querySelector('#score-display .slash').textContent = ' / 10';
+                scoreDisplay.classList.remove('gold');
+            } else {
+                const script = parseFloat(sliders.script.value);
+                const acting = parseFloat(sliders.acting.value);
+                const directing = parseFloat(sliders.directing.value);
+                const visual = parseFloat(sliders.visual.value);
+                const sound = parseFloat(sliders.sound.value);
+                const relevance = parseFloat(sliders.relevance.value);
+                const base = script + acting + directing;
+                const kVisual = getCoef(visual);
+                const kSound = getCoef(sound);
+                const kRelevance = getCoef(relevance);
+                let score = base * kVisual * kSound * kRelevance;
+                score = Math.min(Math.round(score * 100) / 100, 30);
+                totalScore.textContent = score.toFixed(2);
+                document.querySelector('#score-display .slash').textContent = '';
+                if (score >= 24) {
+                    scoreDisplay.classList.add('gold');
+                } else {
+                    scoreDisplay.classList.remove('gold');
+                }
+                // обновляем расширенные показатели
+                extendedScore.textContent = score.toFixed(2);
+                const rank = getRank(score);
+                extendedRank.textContent = `${rank.emoji} ${rank.label} фильм`;
+                baseSum.textContent = base.toFixed(1);
+                coefVisual.textContent = kVisual.toFixed(3);
+                coefSound.textContent = kSound.toFixed(3);
+                coefRelevance.textContent = kRelevance.toFixed(3);
+                // обновляем отображения значений слайдеров
+                valDisplays.script.textContent = script.toFixed(1);
+                valDisplays.acting.textContent = acting.toFixed(1);
+                valDisplays.directing.textContent = directing.toFixed(1);
+                valDisplays.visual.textContent = visual.toFixed(1);
+                valDisplays.sound.textContent = sound.toFixed(1);
+                valDisplays.relevance.textContent = relevance.toFixed(1);
+            }
+        }
+
+        // События слайдеров
+        basicSlider.addEventListener('input', () => {
+            const val = parseFloat(basicSlider.value);
+            basicVal.textContent = val.toFixed(1);
+            updateScoreDisplay();
+            updateBasicHint();
+        });
+        Object.values(sliders).forEach(sl => {
+            sl.addEventListener('input', updateScoreDisplay);
         });
 
-        // Сохранение / очистка
-        document.getElementById('saveBtn').addEventListener('click', saveCurrent);
-        document.getElementById('clearBtn').addEventListener('click', clearAll);
+        // Подсказка для базовой оценки
+        async function updateBasicHint() {
+            const val = parseFloat(basicSlider.value);
+            const coll = await loadCollection();
+            const similar = coll
+                .filter(item => item.mode === 'basic' && Math.abs(item.score - val) < 0.75)
+                .slice(0, 5);
+            if (similar.length === 0) {
+                basicHint.textContent = '';
+                return;
+            }
+            basicHint.textContent = '📽️ Фильмы с такой оценкой: ' + similar.map(item => `${item.title} (${item.score.toFixed(1)})`).join(' · ');
+        }
 
-        // События коллекции
-        document.getElementById('collectionSearch').addEventListener('input', renderCollection);
-        document.getElementById('collectionSort').addEventListener('change', renderCollection);
-        document.getElementById('collectionFilter').addEventListener('input', renderCollection);
+        // ============================================
+        // 4. ПОИСК
+        // ============================================
+        let searchTimeout = null;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            const query = searchInput.value.trim();
+            selectedRelease.style.display = 'none';
+            selectedFilm = null;
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            searchResults.innerHTML = '<div class="search-msg">Ищем...</div>';
+            searchResults.style.display = 'block';
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, 500);
+        });
 
-        // Начальная загрузка
-        await renderCollection();
-        await updateHints();
-        updateExtended();
-        document.getElementById('selectedContainer').classList.add('hidden');
-    });
-</script>
+        async function performSearch(query) {
+            try {
+                const films = await searchKinopoisk(query);
+                if (films.length === 0) {
+                    searchResults.innerHTML = '<div class="search-msg">Ничего не найдено</div>';
+                    return;
+                }
+                const enriched = await Promise.all(films.map(async f => {
+                    try {
+                        const details = await getFilmDetails(f.id);
+                        return { ...f, ...details };
+                    } catch { return { ...f, genres: 'Неизвестно', isCartoon: false }; }
+                }));
+                searchResults.innerHTML = enriched.map(f => `
+                    <div class="search-item" data-id="${f.id}">
+                        <img src="${f.image || ''}" alt="постер" />
+                        <div class="search-item-info">
+                            <div class="search-item-title">${f.title}</div>
+                            <div class="search-item-artist">${f.year} · ${f.genres || '—'}</div>
+                        </div>
+                        <span class="badge" style="${f.isCartoon ? 'background:#8338ec;color:#fff;' : ''}">${f.isCartoon ? '🎨 Мульт' : '🎬 Фильм'}</span>
+                    </div>
+                `).join('');
+                document.querySelectorAll('.search-item').forEach(el => {
+                    el.addEventListener('click', function() {
+                        const id = parseInt(this.dataset.id);
+                        const film = enriched.find(f => f.id === id);
+                        if (film) selectFilm(film);
+                    });
+                });
+            } catch (err) {
+                searchResults.innerHTML = `<div class="search-msg" style="color:var(--red-accent);">Ошибка: ${err.message}</div>`;
+            }
+        }
+
+        function selectFilm(film) {
+            selectedFilm = film;
+            searchResults.style.display = 'none';
+            searchInput.value = '';
+            selectedRelease.style.display = 'flex';
+            releaseImg.src = film.image || 'https://via.placeholder.com/70';
+            releaseTitle.textContent = film.title;
+            releaseArtist.textContent = `${film.year} · ${film.genres || '—'}`;
+            releaseType.textContent = film.isCartoon ? 'Мультфильм' : 'Фильм';
+            releaseExtra.textContent = '';
+
+            if (film.isCartoon) {
+                // принудительно базовая
+                modeBasicBtn.click();
+                modeExtendedBtn.disabled = true;
+                modeExtendedBtn.classList.remove('active');
+                modeBasicBtn.classList.add('active');
+            } else {
+                modeExtendedBtn.disabled = false;
+                // если текущий extended, оставляем, иначе basic
+                if (currentMode === 'extended') {
+                    modeExtendedBtn.click();
+                } else {
+                    modeBasicBtn.click();
+                }
+            }
+            updateScoreDisplay();
+        }
+
+        // ============================================
+        // 5. СОХРАНЕНИЕ ОЦЕНКИ
+        // ============================================
+        document.getElementById('save-btn').addEventListener('click', async () => {
+            if (!selectedFilm) {
+                tg.showAlert('Сначала найдите и выберите фильм');
+                return;
+            }
+            const coll = await loadCollection();
+            let score;
+            let mode = currentMode;
+            let slidersData = null;
+            let rank = null;
+            if (mode === 'basic') {
+                score = parseFloat(basicSlider.value);
+            } else {
+                const script = parseFloat(sliders.script.value);
+                const acting = parseFloat(sliders.acting.value);
+                const directing = parseFloat(sliders.directing.value);
+                const visual = parseFloat(sliders.visual.value);
+                const sound = parseFloat(sliders.sound.value);
+                const relevance = parseFloat(sliders.relevance.value);
+                const base = script + acting + directing;
+                const kVisual = getCoef(visual);
+                const kSound = getCoef(sound);
+                const kRelevance = getCoef(relevance);
+                score = Math.min(Math.round(base * kVisual * kSound * kRelevance * 100) / 100, 30);
+                rank = getRank(score).label;
+                slidersData = { script, acting, directing, visual, sound, relevance };
+            }
+            const item = {
+                id: selectedFilm.id,
+                title: selectedFilm.title,
+                year: selectedFilm.year,
+                image: selectedFilm.image,
+                type: selectedFilm.isCartoon ? 'cartoon' : 'movie',
+                mode: mode,
+                score: score,
+                rank: rank,
+                sliders: slidersData
+            };
+            if (coll.some(el => el.id === item.id)) {
+                tg.showAlert('Этот фильм уже есть в коллекции');
+                return;
+            }
+            coll.push(item);
+            await saveCollection(coll);
+            tg.showAlert('Оценка сохранена!');
+            renderCollection();
+            updateBasicHint();
+        });
+
+        // ============================================
+        // 6. КОЛЛЕКЦИЯ
+        // ============================================
+        const collectionSearch = document.getElementById('collection-search');
+        const collectionSort = document.getElementById('collection-sort');
+        const collectionList = document.getElementById('collection-list');
+
+        async function renderCollection() {
+            const query = collectionSearch.value.toLowerCase();
+            const sortMethod = collectionSort.value;
+            let data = await loadCollection();
+            if (query) data = data.filter(item => item.title.toLowerCase().includes(query));
+            if (sortMethod === 'highest') data.sort((a, b) => b.score - a.score);
+            else if (sortMethod === 'lowest') data.sort((a, b) => a.score - b.score);
+            else data.sort((a, b) => b.id - a.id);
+
+            collectionList.innerHTML = '';
+            if (data.length === 0) {
+                collectionList.innerHTML = '<div class="empty-text">Ничего не найдено</div>';
+                return;
+            }
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                const imgSrc = item.image || 'https://via.placeholder.com/40';
+                let scoreDisplay = '';
+                let status = '';
+                let isGold = false;
+                if (item.mode === 'basic') {
+                    scoreDisplay = `${item.score.toFixed(1)}/10`;
+                    status = 'Базовая';
+                } else {
+                    scoreDisplay = `${item.score.toFixed(2)}`;
+                    const rank = getRank(item.score);
+                    status = rank.emoji + ' ' + rank.label;
+                    if (item.score >= 24) isGold = true;
+                }
+                div.innerHTML = `
+                    <img src="${imgSrc}" alt="постер" />
+                    <div class="history-item-info">
+                        <div class="history-item-title">${item.title}</div>
+                        <div class="history-item-artist">${item.year || 'н/д'} · ${item.type === 'cartoon' ? 'Мультфильм' : 'Фильм'}</div>
+                    </div>
+                    <div class="history-item-right">
+                        <div class="history-item-score ${isGold ? 'gold' : ''}">${scoreDisplay}</div>
+                        <span class="history-item-status">${status}</span>
+                        <button class="delete-btn" onclick="deleteItem(${item.id})">×</button>
+                    </div>
+                `;
+                div.addEventListener('click', (e) => {
+                    if (e.target.closest('.delete-btn')) return;
+                    openModal(item.id);
+                });
+                collectionList.appendChild(div);
+            });
+        }
+
+        window.deleteItem = async function(id) {
+            tg.showConfirm('Удалить эту оценку?', async (confirmed) => {
+                if (confirmed) {
+                    let coll = await loadCollection();
+                    coll = coll.filter(item => item.id !== id);
+                    await saveCollection(coll);
+                }
+            });
+        };
+
+        collectionSearch.addEventListener('input', renderCollection);
+        collectionSort.addEventListener('change', renderCollection);
+
+        // ============================================
+        // 7. МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ
+        // ============================================
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalClose = document.getElementById('modal-close-btn');
+        const modalEditBtn = document.getElementById('modal-edit-btn');
+        const modalSaveEditBtn = document.getElementById('modal-save-edit-btn');
+        const modalDeleteBtn = document.getElementById('modal-delete-btn');
+        let currentModalItemId = null;
+        let isEditMode = false;
+
+        async function openModal(id) {
+            const coll = await loadCollection();
+            const item = coll.find(el => el.id === id);
+            if (!item) return;
+            currentModalItemId = id;
+            isEditMode = false;
+
+            document.getElementById('modal-img').src = item.image || 'https://via.placeholder.com/60';
+            document.getElementById('modal-title').textContent = item.title;
+            document.getElementById('modal-artist').textContent = item.year || 'н/д';
+            document.getElementById('modal-meta').textContent = item.type === 'cartoon' ? 'Мультфильм' : 'Фильм';
+
+            const container = document.getElementById('modal-sliders-container');
+            container.innerHTML = '';
+
+            if (item.mode === 'basic') {
+                document.getElementById('modal-score').textContent = `${item.score.toFixed(1)} / 10`;
+                document.getElementById('modal-score').className = 'modal-score';
+                const div = document.createElement('div');
+                div.className = 'sliders-group';
+                div.innerHTML = `
+                    <div class="slider-container">
+                        <div class="slider-header"><span>Оценка фильма</span><span class="value" id="modal-basic-val">${item.score.toFixed(1)}</span></div>
+                        <input type="range" id="modal-basic-slider" min="1" max="10" step="0.5" value="${item.score}" disabled />
+                    </div>
+                `;
+                container.appendChild(div);
+            } else {
+                const sl = item.sliders || { script: 0, acting: 0, directing: 0, visual: 0, sound: 0, relevance: 0 };
+                const rank = getRank(item.score);
+                document.getElementById('modal-score').textContent = `${item.score.toFixed(2)}`;
+                document.getElementById('modal-score').className = 'modal-score' + (item.score >= 24 ? ' gold' : '');
+                const fields = [
+                    { id: 'script', label: 'Сюжет и сценарий', value: sl.script, min: 1, max: 5, step: 0.5, color: 'var(--blue-accent)' },
+                    { id: 'acting', label: 'Актёрская игра', value: sl.acting, min: 1, max: 5, step: 0.5, color: 'var(--blue-accent)' },
+                    { id: 'directing', label: 'Режиссура', value: sl.directing, min: 1, max: 5, step: 0.5, color: 'var(--blue-accent)' },
+                    { id: 'visual', label: 'Визуал и операторская', value: sl.visual, min: 1, max: 5, step: 1, color: 'var(--purple-accent)' },
+                    { id: 'sound', label: 'Саунд-дизайн и музыка', value: sl.sound, min: 1, max: 5, step: 1, color: 'var(--purple-accent)' },
+                    { id: 'relevance', label: 'Актуальность / Смысл', value: sl.relevance, min: 1, max: 5, step: 1, color: 'var(--purple-accent)' }
+                ];
+                fields.forEach(f => {
+                    const div = document.createElement('div');
+                    div.className = 'slider-container';
+                    div.style.borderLeft = '4px solid ' + f.color;
+                    div.style.paddingLeft = '8px';
+                    div.innerHTML = `
+                        <div class="slider-header"><span>${f.label}</span><span class="value" style="color:${f.color};" id="modal-val-${f.id}">${f.value}</span></div>
+                        <input type="range" id="modal-slider-${f.id}" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.value}" disabled style="background:linear-gradient(to right, ${f.color} ${((f.value-1)/(f.max-1))*100}%, #2d2e33 ${((f.value-1)/(f.max-1))*100}%);" />
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            modalEditBtn.style.display = 'block';
+            modalSaveEditBtn.style.display = 'none';
+            document.querySelector('.modal-content').classList.remove('edit-mode');
+            modalOverlay.classList.add('active');
+        }
+
+        modalClose.addEventListener('click', () => {
+            modalOverlay.classList.remove('active');
+        });
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) modalOverlay.classList.remove('active');
+        });
+
+        modalEditBtn.addEventListener('click', function() {
+            if (!currentModalItemId) return;
+            isEditMode = true;
+            const inputs = document.querySelectorAll('#modal-sliders-container input[type="range"]');
+            inputs.forEach(inp => inp.disabled = false);
+            modalEditBtn.style.display = 'none';
+            modalSaveEditBtn.style.display = 'block';
+            document.querySelector('.modal-content').classList.add('edit-mode');
+        });
+
+        modalSaveEditBtn.addEventListener('click', async function() {
+            if (!currentModalItemId) return;
+            const coll = await loadCollection();
+            const item = coll.find(el => el.id === currentModalItemId);
+            if (!item) return;
+
+            if (item.mode === 'basic') {
+                const slider = document.getElementById('modal-basic-slider');
+                const newScore = parseFloat(slider.value);
+                item.score = newScore;
+            } else {
+                const ids = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
+                const newSliders = {};
+                ids.forEach(id => {
+                    const inp = document.getElementById(`modal-slider-${id}`);
+                    newSliders[id] = parseFloat(inp.value);
+                });
+                const base = newSliders.script + newSliders.acting + newSliders.directing;
+                const kVisual = getCoef(newSliders.visual);
+                const kSound = getCoef(newSliders.sound);
+                const kRelevance = getCoef(newSliders.relevance);
+                let score = base * kVisual * kSound * kRelevance;
+                score = Math.min(Math.round(score * 100) / 100, 30);
+                item.score = score;
+                item.rank = getRank(score).label;
+                item.sliders = newSliders;
+            }
+
+            await saveCollection(coll);
+            await openModal(currentModalItemId);
+            tg.showAlert('Оценка обновлена!');
+            renderCollection();
+            updateBasicHint();
+        });
+
+        modalDeleteBtn.addEventListener('click', async function() {
+            if (!currentModalItemId) return;
+            tg.showConfirm('Удалить эту оценку?', async (confirmed) => {
+                if (confirmed) {
+                    let coll = await loadCollection();
+                    coll = coll.filter(item => item.id !== currentModalItemId);
+                    await saveCollection(coll);
+                    modalOverlay.classList.remove('active');
+                    renderCollection();
+                    updateBasicHint();
+                }
+            });
+        });
+
+        // ============================================
+        // 8. МОДАЛЬНОЕ ОКНО КРИТЕРИЕВ
+        // ============================================
+        const criteriaModal = document.getElementById('criteria-modal');
+        const criteriaClose = document.getElementById('criteria-close-btn');
+        const criteriaBtn = document.getElementById('criteria-btn');
+        const criteriaBtnExt = document.getElementById('criteria-btn-ext');
+
+        function openCriteria() {
+            criteriaModal.classList.add('active');
+        }
+        criteriaBtn.addEventListener('click', openCriteria);
+        criteriaBtnExt.addEventListener('click', openCriteria);
+        criteriaClose.addEventListener('click', () => {
+            criteriaModal.classList.remove('active');
+        });
+        criteriaModal.addEventListener('click', (e) => {
+            if (e.target === criteriaModal) criteriaModal.classList.remove('active');
+        });
+
+        // ============================================
+        // 9. НИЖНЕЕ МЕНЮ
+        // ============================================
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const tab = this.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.getElementById('tab-' + tab).classList.add('active');
+                if (tab === 'collection') renderCollection();
+            });
+        });
+
+        // ============================================
+        // 10. ИНИЦИАЛИЗАЦИЯ
+        // ============================================
+        async function init() {
+            await renderCollection();
+            await updateBasicHint();
+            // по умолчанию базовый режим
+            modeBasicBtn.click();
+        }
+        init();
+    </script>
 </body>
 </html>
