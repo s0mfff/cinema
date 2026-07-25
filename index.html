@@ -31,10 +31,7 @@
             align-items: center;
             margin-bottom: 16px;
         }
-        .header h1 {
-            font-size: 22px;
-            font-weight: 700;
-        }
+        .header h1 { font-size: 22px; font-weight: 700; }
         .tabs {
             display: flex;
             gap: 6px;
@@ -58,7 +55,7 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* ===== СТИЛИ ДЛЯ ВКЛАДКИ ОЦЕНКИ ===== */
+        /* ===== ВКЛАДКА ОЦЕНКИ ===== */
         .sub { color: #888; font-size: 14px; margin-bottom: 16px; }
         .search-box { display: flex; gap: 8px; margin-bottom: 16px; }
         .search-box input {
@@ -201,6 +198,11 @@
             background: #8338ec;
             box-shadow: 0 2px 8px rgba(131,56,236,0.4);
         }
+        .slider-item input[type="range"]:disabled::-webkit-slider-thumb {
+            background: #555;
+            box-shadow: none;
+            cursor: default;
+        }
 
         .group-title {
             font-size: 13px;
@@ -293,7 +295,7 @@
         .hidden { display: none !important; }
         .footnote { font-size:11px; color:#555; text-align:center; margin-top:12px; }
 
-        /* ===== СТИЛИ ДЛЯ КОЛЛЕКЦИИ ===== */
+        /* ===== КОЛЛЕКЦИЯ ===== */
         .collection-controls {
             display: flex;
             gap: 10px;
@@ -324,8 +326,8 @@
         }
         .collection-item {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 12px;
             background: #0f0f12;
             border-radius: 12px;
             padding: 10px 14px;
@@ -334,7 +336,15 @@
             transition: background 0.1s;
         }
         .collection-item:active { background: #2a2b30; }
+        .collection-item img {
+            width: 40px;
+            height: 56px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: #2a2b30;
+        }
         .collection-item .info {
+            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 2px;
@@ -362,12 +372,15 @@
             font-size: 12px;
             color: #aaa;
             background: #1d1e22;
-            padding: 0 6px;
+            padding: 0 8px;
             border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
         .empty-text { color: #555; font-size: 14px; text-align: center; padding: 20px 0; }
 
-        /* Модальное окно деталей */
+        /* ===== МОДАЛЬНОЕ ОКНО ===== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -437,19 +450,33 @@
             color: #bbb;
             margin-bottom: 12px;
         }
-        .modal-details {
+        .modal-sliders {
+            margin: 16px 0;
+        }
+        .modal-sliders .slider-item {
+            margin-bottom: 12px;
+        }
+        .modal-sliders .slider-item input[type="range"] {
+            width: 100%;
+        }
+        .modal-actions {
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            font-size: 13px;
-            color: #888;
+            gap: 10px;
+            margin-top: 16px;
         }
-        .modal-details span {
-            background: #0f0f12;
-            padding: 2px 10px;
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
             border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
         }
+        .modal-actions .edit-btn { background: #8338ec; color: #fff; }
+        .modal-actions .save-btn { background: #3a86ff; color: #fff; display: none; }
+        .modal-actions .delete-btn { background: #ff4757; color: #fff; }
+        .edit-mode .modal-actions .edit-btn { display: none; }
+        .edit-mode .modal-actions .save-btn { display: block; }
     </style>
 </head>
 <body>
@@ -463,7 +490,7 @@
         </div>
     </div>
 
-    <!-- ========== ВКЛАДКА ОЦЕНКИ ========== -->
+    <!-- ===== ВКЛАДКА ОЦЕНКИ ===== -->
     <div id="tab-rate" class="tab-content active">
         <div class="sub">Поиск через Кинопоиск Unofficial</div>
 
@@ -549,7 +576,7 @@
         <div class="footnote">Ранги: 🥈 0–5.99 · 🥇 6–11.99 · 💎 12–17.99 · 🔷 18–23.99 · 🔴 24–30</div>
     </div>
 
-    <!-- ========== ВКЛАДКА КОЛЛЕКЦИЯ ========== -->
+    <!-- ===== ВКЛАДКА КОЛЛЕКЦИЯ ===== -->
     <div id="tab-collection" class="tab-content">
         <div class="collection-controls">
             <input type="text" id="collectionSearch" placeholder="Поиск в коллекции..." class="search-input" style="flex:1;" />
@@ -559,7 +586,7 @@
                 <option value="high">По убыванию балла</option>
                 <option value="low">По возрастанию балла</option>
             </select>
-            <input type="number" id="collectionFilter" placeholder="Фильтр по оценке" min="1" max="10" step="0.5" />
+            <input type="number" id="collectionFilter" placeholder="Оценка" min="1" max="10" step="0.5" />
         </div>
         <div id="collectionList" class="collection-list">
             <div class="empty-text">Пока нет оценок</div>
@@ -567,9 +594,9 @@
     </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ -->
+<!-- ===== МОДАЛЬНОЕ ОКНО ===== -->
 <div id="modalOverlay" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-content" id="modalContent">
         <button class="modal-close" id="modalClose">✕</button>
         <div class="modal-header">
             <img id="modalPoster" src="" alt="постер" />
@@ -580,7 +607,12 @@
         </div>
         <div class="modal-score" id="modalScore">8.5/10</div>
         <div class="modal-status" id="modalStatus">—</div>
-        <div class="modal-details" id="modalDetails"></div>
+        <div class="modal-sliders" id="modalSliders"></div>
+        <div class="modal-actions" id="modalActions">
+            <button class="edit-btn" id="modalEditBtn">✏️ Изменить</button>
+            <button class="save-btn" id="modalSaveBtn">💾 Сохранить</button>
+            <button class="delete-btn" id="modalDeleteBtn">🗑️ Удалить</button>
+        </div>
     </div>
 </div>
 
@@ -633,7 +665,7 @@
     }
 
     // ================================================================
-    //  4. API КИНОПОИСКА (поиск и детали)
+    //  4. API КИНОПОИСКА
     // ================================================================
     async function searchKinopoisk(query) {
         const url = `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}&page=1`;
@@ -670,7 +702,7 @@
     }
 
     // ================================================================
-    //  5. ОТОБРАЖЕНИЕ КОЛЛЕКЦИИ (с сортировкой и фильтром)
+    //  5. ОТОБРАЖЕНИЕ КОЛЛЕКЦИИ
     // ================================================================
     async function renderCollection() {
         const list = document.getElementById('collectionList');
@@ -680,29 +712,20 @@
 
         let items = await loadCollection();
 
-        // Фильтр по тексту
         if (searchQuery) {
             items = items.filter(item =>
                 item.title.toLowerCase().includes(searchQuery) ||
                 (item.year && item.year.toString().includes(searchQuery))
             );
         }
-
-        // Фильтр по оценке
         if (!isNaN(filterScore) && filterScore > 0) {
             items = items.filter(item => Math.abs(item.score - filterScore) < 0.01);
         }
 
-        // Сортировка
-        if (sortMode === 'newest') {
-            items.sort((a, b) => b.id - a.id);
-        } else if (sortMode === 'oldest') {
-            items.sort((a, b) => a.id - b.id);
-        } else if (sortMode === 'high') {
-            items.sort((a, b) => b.score - a.score);
-        } else if (sortMode === 'low') {
-            items.sort((a, b) => a.score - b.score);
-        }
+        if (sortMode === 'newest') items.sort((a, b) => b.id - a.id);
+        else if (sortMode === 'oldest') items.sort((a, b) => a.id - b.id);
+        else if (sortMode === 'high') items.sort((a, b) => b.score - a.score);
+        else if (sortMode === 'low') items.sort((a, b) => a.score - b.score);
 
         if (items.length === 0) {
             list.innerHTML = '<div class="empty-text">Ничего не найдено</div>';
@@ -713,29 +736,33 @@
             let scoreDisplay = '';
             let statusText = '';
             let scoreClass = '';
+            let emoji = '';
             if (item.mode === 'basic') {
                 scoreDisplay = `${item.score.toFixed(1)}/10`;
                 statusText = 'Базовая';
             } else {
                 scoreDisplay = `${item.score.toFixed(2)}`;
-                statusText = item.rank || '—';
+                const rank = getRank(item.score);
+                emoji = rank.emoji;
+                statusText = rank.label;
                 if (item.score >= 24) scoreClass = 'gold';
             }
+            const image = item.image || 'https://via.placeholder.com/40';
             return `
                 <div class="collection-item" data-id="${item.id}">
+                    <img src="${image}" alt="постер" />
                     <div class="info">
                         <div class="title">${item.title}</div>
                         <div class="meta">${item.year || 'н/д'} · ${item.type === 'cartoon' ? 'Мультфильм' : 'Фильм'}</div>
                     </div>
                     <div class="right">
                         <div class="score ${scoreClass}">${scoreDisplay}</div>
-                        ${statusText ? `<div class="status">${statusText}</div>` : ''}
+                        ${statusText ? `<div class="status">${emoji} ${statusText}</div>` : ''}
                     </div>
                 </div>
             `;
         }).join('');
 
-        // Обработчики клика для открытия модалки
         document.querySelectorAll('.collection-item').forEach(el => {
             el.addEventListener('click', function() {
                 const id = parseInt(this.dataset.id);
@@ -745,7 +772,7 @@
     }
 
     // ================================================================
-    //  6. ПОДСКАЗКИ (фильмы с близкой оценкой)
+    //  6. ПОДСКАЗКИ
     // ================================================================
     async function updateHints() {
         const basicVal = parseFloat(document.getElementById('basicSlider').value);
@@ -766,7 +793,7 @@
     }
 
     // ================================================================
-    //  7. РАСШИРЕННАЯ ОЦЕНКА (формула и ранги)
+    //  7. РАНГИ И ФОРМУЛА
     // ================================================================
     const ranks = [
         { min: 0.34, max: 5.99, label: 'Серебряный', emoji: '🥈' },
@@ -783,44 +810,173 @@
 
     function getCoef(val) { return 0.80 + (val - 1) * 0.115; }
 
-    function updateExtended() {
-        const script = parseFloat(document.getElementById('script').value);
-        const acting = parseFloat(document.getElementById('acting').value);
-        const directing = parseFloat(document.getElementById('directing').value);
-        const visual = parseFloat(document.getElementById('visual').value);
-        const sound = parseFloat(document.getElementById('sound').value);
-        const relevance = parseFloat(document.getElementById('relevance').value);
+    // ================================================================
+    //  8. МОДАЛЬНОЕ ОКНО
+    // ================================================================
+    let currentModalItemId = null;
+    let isEditMode = false;
 
-        document.getElementById('val-script').textContent = script.toFixed(1);
-        document.getElementById('val-acting').textContent = acting.toFixed(1);
-        document.getElementById('val-directing').textContent = directing.toFixed(1);
-        document.getElementById('val-visual').textContent = visual.toFixed(1);
-        document.getElementById('val-sound').textContent = sound.toFixed(1);
-        document.getElementById('val-relevance').textContent = relevance.toFixed(1);
+    async function openModal(id) {
+        const coll = await loadCollection();
+        const item = coll.find(el => el.id === id);
+        if (!item) return;
 
-        const base = script + acting + directing;
-        const kVisual = getCoef(visual);
-        const kSound = getCoef(sound);
-        const kRelevance = getCoef(relevance);
-        let score = base * kVisual * kSound * kRelevance;
-        score = Math.min(Math.round(score * 100) / 100, 30);
+        currentModalItemId = id;
+        isEditMode = false;
 
-        document.getElementById('baseSum').textContent = base.toFixed(1);
-        document.getElementById('coefVisual').textContent = kVisual.toFixed(3);
-        document.getElementById('coefSound').textContent = kSound.toFixed(3);
-        document.getElementById('coefRelevance').textContent = kRelevance.toFixed(3);
+        // Заполняем заголовок
+        document.getElementById('modalPoster').src = item.image || 'https://via.placeholder.com/60';
+        document.getElementById('modalTitle').textContent = item.title;
+        document.getElementById('modalMeta').textContent = `${item.year || 'н/д'} · ${item.type === 'cartoon' ? 'Мультфильм' : 'Фильм'}`;
 
-        const scoreEl = document.getElementById('scoreDisplay');
-        scoreEl.textContent = score.toFixed(2);
-        scoreEl.classList.toggle('gold', score >= 24);
+        // Блок слайдеров
+        const slidersContainer = document.getElementById('modalSliders');
+        slidersContainer.innerHTML = '';
 
-        const rank = getRank(score);
-        document.getElementById('rankDisplay').innerHTML =
-            `<span class="emoji">${rank.emoji}</span> ${rank.label} фильм`;
+        if (item.mode === 'basic') {
+            // Базовая: один слайдер
+            const score = item.score;
+            document.getElementById('modalScore').textContent = `${score.toFixed(1)} / 10`;
+            document.getElementById('modalScore').className = 'modal-score';
+            document.getElementById('modalStatus').textContent = 'Базовая оценка';
+
+            const div = document.createElement('div');
+            div.className = 'slider-item';
+            div.innerHTML = `
+                <div class="label-row">
+                    <span>Оценка фильма</span>
+                    <span class="val" id="modalBasicVal">${score.toFixed(1)}</span>
+                </div>
+                <input type="range" id="modalBasicSlider" min="1" max="10" step="0.5" value="${score}" disabled />
+            `;
+            slidersContainer.appendChild(div);
+            // Сохраним ссылку для редактирования
+            slidersContainer.dataset.mode = 'basic';
+        } else {
+            // Расширенная: 6 слайдеров
+            const sl = item.sliders || { script: 0, acting: 0, directing: 0, visual: 0, sound: 0, relevance: 0 };
+            const rank = getRank(item.score);
+            document.getElementById('modalScore').textContent = `${item.score.toFixed(2)}`;
+            document.getElementById('modalScore').className = 'modal-score' + (item.score >= 24 ? ' gold' : '');
+            document.getElementById('modalStatus').textContent = `${rank.emoji} ${rank.label}`;
+
+            const fields = [
+                { id: 'script', label: 'Сюжет и сценарий', value: sl.script, min: 1, max: 5, step: 0.5, cls: '' },
+                { id: 'acting', label: 'Актёрская игра', value: sl.acting, min: 1, max: 5, step: 0.5, cls: '' },
+                { id: 'directing', label: 'Режиссура', value: sl.directing, min: 1, max: 5, step: 0.5, cls: '' },
+                { id: 'visual', label: 'Визуал и операторская', value: sl.visual, min: 1, max: 5, step: 1, cls: 'purple-slider' },
+                { id: 'sound', label: 'Саунд-дизайн и музыка', value: sl.sound, min: 1, max: 5, step: 1, cls: 'purple-slider' },
+                { id: 'relevance', label: 'Актуальность / Смысл', value: sl.relevance, min: 1, max: 5, step: 1, cls: 'purple-slider' }
+            ];
+
+            fields.forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'slider-item';
+                div.innerHTML = `
+                    <div class="label-row">
+                        <span>${f.label}</span>
+                        <span class="val ${f.cls.includes('purple') ? 'purple' : ''}" id="modalVal_${f.id}">${f.value}</span>
+                    </div>
+                    <input type="range" id="modalSlider_${f.id}" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.value}" class="${f.cls}" disabled />
+                `;
+                slidersContainer.appendChild(div);
+            });
+            slidersContainer.dataset.mode = 'extended';
+        }
+
+        // Сброс режима редактирования
+        document.getElementById('modalContent').classList.remove('edit-mode');
+        document.getElementById('modalEditBtn').style.display = 'block';
+        document.getElementById('modalSaveBtn').style.display = 'none';
+        isEditMode = false;
+
+        document.getElementById('modalOverlay').classList.add('active');
     }
 
+    // Закрытие модалки
+    document.getElementById('modalClose').addEventListener('click', () => {
+        document.getElementById('modalOverlay').classList.remove('active');
+    });
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) document.getElementById('modalOverlay').classList.remove('active');
+    });
+
     // ================================================================
-    //  8. ОСНОВНАЯ ЛОГИКА ПРИЛОЖЕНИЯ
+    //  9. РЕДАКТИРОВАНИЕ В МОДАЛКЕ
+    // ================================================================
+    document.getElementById('modalEditBtn').addEventListener('click', function() {
+        if (!currentModalItemId) return;
+        isEditMode = true;
+
+        // Разблокируем все слайдеры в модалке
+        document.querySelectorAll('#modalSliders input[type="range"]').forEach(inp => inp.disabled = false);
+        document.getElementById('modalContent').classList.add('edit-mode');
+        this.style.display = 'none';
+        document.getElementById('modalSaveBtn').style.display = 'block';
+    });
+
+    document.getElementById('modalSaveBtn').addEventListener('click', async function() {
+        if (!currentModalItemId) return;
+
+        const coll = await loadCollection();
+        const item = coll.find(el => el.id === currentModalItemId);
+        if (!item) return;
+
+        const mode = document.getElementById('modalSliders').dataset.mode;
+
+        if (mode === 'basic') {
+            const slider = document.getElementById('modalBasicSlider');
+            const newScore = parseFloat(slider.value);
+            item.score = newScore;
+        } else {
+            // Расширенная: собираем значения
+            const sliders = {};
+            const ids = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
+            ids.forEach(id => {
+                const inp = document.getElementById(`modalSlider_${id}`);
+                sliders[id] = parseFloat(inp.value);
+            });
+            // Пересчитываем балл
+            const base = sliders.script + sliders.acting + sliders.directing;
+            const kVisual = getCoef(sliders.visual);
+            const kSound = getCoef(sliders.sound);
+            const kRelevance = getCoef(sliders.relevance);
+            let score = base * kVisual * kSound * kRelevance;
+            score = Math.min(Math.round(score * 100) / 100, 30);
+            item.score = score;
+            item.rank = getRank(score).label;
+            item.sliders = sliders;
+        }
+
+        // Сохраняем изменения
+        await saveCollection(coll);
+
+        // Обновляем модалку (переоткрываем)
+        await openModal(currentModalItemId);
+        tg.showAlert('Оценка обновлена!');
+        renderCollection();
+        updateHints();
+    });
+
+    // ================================================================
+    //  10. УДАЛЕНИЕ ИЗ МОДАЛКИ
+    // ================================================================
+    document.getElementById('modalDeleteBtn').addEventListener('click', async function() {
+        if (!currentModalItemId) return;
+        tg.showConfirm('Удалить эту оценку?', async (confirmed) => {
+            if (confirmed) {
+                let coll = await loadCollection();
+                coll = coll.filter(item => item.id !== currentModalItemId);
+                await saveCollection(coll);
+                document.getElementById('modalOverlay').classList.remove('active');
+                renderCollection();
+                updateHints();
+            }
+        });
+    });
+
+    // ================================================================
+    //  11. ОСНОВНАЯ ЛОГИКА (поиск, выбор, сохранение)
     // ================================================================
     let selectedFilm = null;
     let currentMode = 'basic';
@@ -965,55 +1121,46 @@
     }
 
     // ================================================================
-    //  9. МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ
+    //  12. ОБНОВЛЕНИЕ РАСШИРЕННОЙ ОЦЕНКИ НА ВКЛАДКЕ
     // ================================================================
-    async function openModal(id) {
-        const coll = await loadCollection();
-        const item = coll.find(el => el.id === id);
-        if (!item) return;
+    function updateExtended() {
+        const script = parseFloat(document.getElementById('script').value);
+        const acting = parseFloat(document.getElementById('acting').value);
+        const directing = parseFloat(document.getElementById('directing').value);
+        const visual = parseFloat(document.getElementById('visual').value);
+        const sound = parseFloat(document.getElementById('sound').value);
+        const relevance = parseFloat(document.getElementById('relevance').value);
 
-        document.getElementById('modalPoster').src = item.image || 'https://via.placeholder.com/60';
-        document.getElementById('modalTitle').textContent = item.title;
-        document.getElementById('modalMeta').textContent = `${item.year || 'н/д'} · ${item.type === 'cartoon' ? 'Мультфильм' : 'Фильм'}`;
+        document.getElementById('val-script').textContent = script.toFixed(1);
+        document.getElementById('val-acting').textContent = acting.toFixed(1);
+        document.getElementById('val-directing').textContent = directing.toFixed(1);
+        document.getElementById('val-visual').textContent = visual.toFixed(1);
+        document.getElementById('val-sound').textContent = sound.toFixed(1);
+        document.getElementById('val-relevance').textContent = relevance.toFixed(1);
 
-        const scoreEl = document.getElementById('modalScore');
-        const statusEl = document.getElementById('modalStatus');
-        const detailsEl = document.getElementById('modalDetails');
+        const base = script + acting + directing;
+        const kVisual = getCoef(visual);
+        const kSound = getCoef(sound);
+        const kRelevance = getCoef(relevance);
+        let score = base * kVisual * kSound * kRelevance;
+        score = Math.min(Math.round(score * 100) / 100, 30);
 
-        if (item.mode === 'basic') {
-            scoreEl.textContent = `${item.score.toFixed(1)} / 10`;
-            scoreEl.className = 'modal-score';
-            statusEl.textContent = 'Базовая оценка';
-            detailsEl.innerHTML = '';
-        } else {
-            scoreEl.textContent = `${item.score.toFixed(2)}`;
-            scoreEl.className = 'modal-score';
-            if (item.score >= 24) scoreEl.classList.add('gold');
-            statusEl.textContent = `Ранг: ${item.rank || '—'}`;
-            // Показываем слайдеры
-            const sl = item.sliders || { script: 0, acting: 0, directing: 0, visual: 0, sound: 0, relevance: 0 };
-            detailsEl.innerHTML = `
-                <span>Сюжет: ${sl.script}</span>
-                <span>Актёры: ${sl.acting}</span>
-                <span>Режиссура: ${sl.directing}</span>
-                <span>Визуал: ${sl.visual}</span>
-                <span>Саунд: ${sl.sound}</span>
-                <span>Актуальность: ${sl.relevance}</span>
-            `;
-        }
+        document.getElementById('baseSum').textContent = base.toFixed(1);
+        document.getElementById('coefVisual').textContent = kVisual.toFixed(3);
+        document.getElementById('coefSound').textContent = kSound.toFixed(3);
+        document.getElementById('coefRelevance').textContent = kRelevance.toFixed(3);
 
-        document.getElementById('modalOverlay').classList.add('active');
+        const scoreEl = document.getElementById('scoreDisplay');
+        scoreEl.textContent = score.toFixed(2);
+        scoreEl.classList.toggle('gold', score >= 24);
+
+        const rank = getRank(score);
+        document.getElementById('rankDisplay').innerHTML =
+            `<span class="emoji">${rank.emoji}</span> ${rank.label} фильм`;
     }
 
-    document.getElementById('modalClose').addEventListener('click', () => {
-        document.getElementById('modalOverlay').classList.remove('active');
-    });
-    document.getElementById('modalOverlay').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) document.getElementById('modalOverlay').classList.remove('active');
-    });
-
     // ================================================================
-    //  10. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+    //  13. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
     // ================================================================
     document.querySelectorAll('.tabs button').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -1027,7 +1174,7 @@
     });
 
     // ================================================================
-    //  11. ИНИЦИАЛИЗАЦИЯ
+    //  14. ИНИЦИАЛИЗАЦИЯ
     // ================================================================
     document.addEventListener('DOMContentLoaded', async () => {
         // Поиск
@@ -1053,7 +1200,7 @@
             switchMode('extended');
         });
 
-        // Слайдеры
+        // Слайдеры на вкладке оценки
         document.getElementById('basicSlider').addEventListener('input', () => {
             const val = parseFloat(document.getElementById('basicSlider').value);
             document.getElementById('basicVal').textContent = val.toFixed(1);
