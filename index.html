@@ -6,7 +6,7 @@
     <title>Оценка фильма</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* ===== ОБНОВЛЁННЫЙ ДИЗАЙН (ИСПРАВЛЕННЫЙ ДЛЯ МОБИЛОК) ===== */
+        /* ===== ОБНОВЛЁННЫЙ ДИЗАЙН ===== */
         :root {
             --bg-color: #0b0b0e;
             --card-bg: rgba(28, 30, 36, 0.7);
@@ -19,8 +19,9 @@
             --border-color: rgba(255, 255, 255, 0.06);
             --red-accent: #f87171;
             --cartoon-color: #9b8fe6;
-            --glass-bg: rgba(28, 30, 36, 0.85); 
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            /* Сделали фон чуть плотнее, так как убрали глючный blur */
+            --glass-bg: rgba(28, 30, 36, 0.85);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -50,11 +51,18 @@
             padding: 12px;
             overflow-y: auto;
             flex-grow: 1;
-            padding-bottom: 110px;
+            padding-bottom: 80px;
             position: relative;
             z-index: 1;
         }
         .tab-content.active { display: flex; }
+
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
 
         .search-container { position: relative; }
         .search-input, .collection-search {
@@ -79,7 +87,7 @@
             top: 100%;
             left: 0;
             right: 0;
-            background: rgba(28, 30, 36, 0.95);
+            background: var(--glass-bg);
             border: 1px solid var(--card-border);
             border-top: none;
             border-radius: 0 0 14px 14px;
@@ -230,12 +238,14 @@
         input[type="range"]:disabled::-webkit-slider-thumb { background: #555; border-color: #333; cursor: default; transform: none; }
         input[type="range"]:disabled { opacity: 0.5; }
 
+        /* ОРИГИНАЛЬНЫЙ БЛОК КНОПОК И ОЦЕНКИ (ВЕРНУЛ КАК БЫЛО) */
         .footer-score {
             display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 16px;
-            padding-top: 12px;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-top: 6px;
         }
         .score-display {
             font-size: 3.5rem;
@@ -244,11 +254,10 @@
             text-shadow: 0 0 20px rgba(255,255,255,0.03);
             transition: color 0.3s, text-shadow 0.3s;
             line-height: 1;
-            text-align: center;
         }
         .score-display.gold {
             color: var(--gold) !important;
-            text-shadow: 0 0 20px rgba(251, 191, 36, 0.4) !important; 
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.4) !important; /* Уменьшил тень */
         }
         .score-display .slash {
             font-size: 1.4rem;
@@ -260,26 +269,23 @@
 
         .btn-group { 
             display: flex; 
-            gap: 10px; 
-            width: 100%; 
+            gap: 8px; 
+            flex-wrap: wrap; 
+            align-items: center; 
+            margin-left: auto; /* Чтобы кнопки всегда прижимались вправо, даже если цифра скрыта */
         }
         .action-btn {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             background: rgba(255,255,255,0.05);
             color: #fff;
             border: 1px solid rgba(255,255,255,0.08);
-            padding: 12px 8px;
+            padding: 10px 16px;
             border-radius: 12px;
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            text-align: center;
-            line-height: 1.2;
+            white-space: nowrap;
         }
         .action-btn:active { transform: scale(0.95); }
         .save-btn {
@@ -297,7 +303,7 @@
         #tab-collection {
             overflow: hidden;
             gap: 10px;
-            padding-bottom: 110px;
+            padding-bottom: 80px;
         }
         #collection-filters {
             flex-shrink: 0;
@@ -312,7 +318,7 @@
         }
         .collection-controls { display: flex; gap: 8px; flex-direction: column; }
         .collection-sort {
-            background-color: var(--glass-bg);
+            background: var(--glass-bg);
             color: #fff;
             border: 1px solid var(--card-border);
             padding: 12px 14px;
@@ -389,6 +395,7 @@
         }
         .score-filter-scroll .filter-btn:active { transform: scale(0.92); }
 
+        /* Показываем кнопки только на экранах шире 768px */
         @media (min-width: 768px) {
             .filter-scroll-wrapper .scroll-btn { display: flex; }
         }
@@ -515,8 +522,7 @@
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.85);
             z-index: 200;
             justify-content: center;
             align-items: center;
@@ -524,6 +530,7 @@
         }
         .modal-overlay.active { display: flex; }
         .modal-content {
+            background: var(--glass-bg);
             border: 1px solid var(--card-border);
             border-radius: 20px;
             max-width: 480px;
@@ -601,14 +608,15 @@
             color: var(--gold) !important;
             text-shadow: 0 0 20px rgba(251, 191, 36, 0.3) !important;
         }
+        /* ОРИГИНАЛЬНЫЕ КНОПКИ МОДАЛКИ */
         .modal-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
             margin-top: 14px;
-            width: 100%;
+            flex-wrap: wrap;
         }
-        .modal-actions .action-btn { flex: 1; padding: 12px 8px; }
+        .modal-actions .action-btn { flex: 1; min-width: 70px; }
         .modal-actions .edit-btn { background: linear-gradient(135deg, var(--purple-accent), #7c3aed); border: none; color: #fff; }
         .modal-actions .save-edit-btn { background: linear-gradient(135deg, var(--blue-accent), #6d28d9); border: none; color: #fff; display: none; }
         .modal-actions .kp-link-btn { background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); color: #fff; }
@@ -637,7 +645,7 @@
             .history-item { padding: 10px 12px; gap: 10px; }
             .history-item img { width: 34px; height: 48px; }
             .history-item-score { font-size: 1rem; }
-            .action-btn { font-size: 0.8rem; }
+            .action-btn { padding: 8px 12px; font-size: 0.8rem; }
             .sliders-group { padding: 12px; }
             .tab-content { padding: 10px; }
             .release-title { font-size: 1rem; }
@@ -1461,7 +1469,7 @@
             if (mode === 'basic') {
                 modalBasicSection.classList.add('active');
                 modalExtendedSection.classList.remove('active');
-                modalScore.style.display = 'block'; // Показываем в базовом
+                modalScore.style.display = 'block'; // Показываем
             } else {
                 modalExtendedSection.classList.add('active');
                 modalBasicSection.classList.remove('active');
