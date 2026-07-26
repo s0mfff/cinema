@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Оценка фильма</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* ===== ОБНОВЛЁННЫЙ ДИЗАЙН ===== */
         :root {
@@ -19,7 +20,6 @@
             --border-color: rgba(255, 255, 255, 0.06);
             --red-accent: #f87171;
             --cartoon-color: #9b8fe6;
-            /* Сделали фон чуть плотнее, так как убрали глючный blur */
             --glass-bg: rgba(28, 30, 36, 0.85);
             --shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
         }
@@ -238,7 +238,6 @@
         input[type="range"]:disabled::-webkit-slider-thumb { background: #555; border-color: #333; cursor: default; transform: none; }
         input[type="range"]:disabled { opacity: 0.5; }
 
-        /* ОРИГИНАЛЬНЫЙ БЛОК КНОПОК И ОЦЕНКИ (ВЕРНУЛ КАК БЫЛО) */
         .footer-score {
             display: flex;
             justify-content: space-between;
@@ -257,7 +256,7 @@
         }
         .score-display.gold {
             color: var(--gold) !important;
-            text-shadow: 0 0 20px rgba(251, 191, 36, 0.4) !important; /* Уменьшил тень */
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.4) !important;
         }
         .score-display .slash {
             font-size: 1.4rem;
@@ -272,7 +271,7 @@
             gap: 8px; 
             flex-wrap: wrap; 
             align-items: center; 
-            margin-left: auto; /* Чтобы кнопки всегда прижимались вправо, даже если цифра скрыта */
+            margin-left: auto;
         }
         .action-btn {
             background: rgba(255,255,255,0.05);
@@ -299,7 +298,6 @@
             border: 1px solid rgba(255,255,255,0.06);
         }
 
-        /* ===== КОЛЛЕКЦИЯ ===== */
         #tab-collection {
             overflow: hidden;
             gap: 10px;
@@ -395,7 +393,6 @@
         }
         .score-filter-scroll .filter-btn:active { transform: scale(0.92); }
 
-        /* Показываем кнопки только на экранах шире 768px */
         @media (min-width: 768px) {
             .filter-scroll-wrapper .scroll-btn { display: flex; }
         }
@@ -608,7 +605,6 @@
             color: var(--gold) !important;
             text-shadow: 0 0 20px rgba(251, 191, 36, 0.3) !important;
         }
-        /* ОРИГИНАЛЬНЫЕ КНОПКИ МОДАЛКИ */
         .modal-actions {
             display: flex;
             gap: 8px;
@@ -638,7 +634,6 @@
         }
         .criteria-content .purple-title { color: var(--purple-accent); }
 
-        /* Адаптив для маленьких экранов */
         @media (max-width: 420px) {
             .score-display { font-size: 2.8rem; }
             .modal-score { font-size: 2.5rem; }
@@ -903,6 +898,12 @@
         tg.ready();
         tg.expand();
 
+        // ---------- ПОДКЛЮЧЕНИЕ SUPABASE ----------
+        const SUPABASE_URL = 'https://vrnqcyywpyzilhowbasv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZybnFjeXl3cHl6aWxob3diYXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNTU5MzIsImV4cCI6MjEwMDYzMTkzMn0.oYMUAspcrdqlZ4Mx9xu-slBYKPGnDSM4FiwH1K6fZxM'; // 👈 ВСТАВЬТЕ ВАШ КЛЮЧ СЮДА!
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         // ---------- Хранилище ----------
         const STORAGE_KEY = 'rzt_cinema_history_v2';
 
@@ -923,14 +924,77 @@
         }
 
         async function loadCollection() {
+            const user = tg.initDataUnsafe?.user;
+            if (!user) {
+                try {
+                    const data = await cloudGet(STORAGE_KEY);
+                    return data ? JSON.parse(data) : [];
+                } catch { return []; }
+            }
+
             try {
+                const { data, error } = await supabaseClient
+                    .from('user_movies')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false });
+
+                if (error || !data) {
+                    console.error('Ошибка Supabase, грузим локально:', error);
+                    const localData = await cloudGet(STORAGE_KEY);
+                    return localData ? JSON.parse(localData) : [];
+                }
+
+                return data.map(item => ({
+                    id: item.movie_id,
+                    title: item.title,
+                    year: item.year,
+                    image: item.image,
+                    type: item.type,
+                    basicScore: Number(item.basic_score),
+                    extendedScore: item.extended_score ? Number(item.extended_score) : null,
+                    sliders: item.sliders,
+                    extRank: item.ext_rank,
+                    country: item.country,
+                    genres: item.genres
+                }));
+            } catch (err) {
+                console.error('Ошибка:', err);
                 const data = await cloudGet(STORAGE_KEY);
                 return data ? JSON.parse(data) : [];
-            } catch { return []; }
+            }
         }
 
         async function saveCollection(collection) {
             await cloudSet(STORAGE_KEY, JSON.stringify(collection));
+
+            const user = tg.initDataUnsafe?.user;
+            if (user && collection.length > 0) {
+                const item = collection[collection.length - 1];
+
+                const { error } = await supabaseClient
+                    .from('user_movies')
+                    .upsert({
+                        user_id: user.id,
+                        movie_id: item.id,
+                        title: item.title,
+                        year: item.year,
+                        image: item.image,
+                        type: item.type,
+                        basic_score: item.basicScore,
+                        extended_score: item.extendedScore,
+                        sliders: item.sliders,
+                        ext_rank: item.extRank,
+                        country: item.country,
+                        genres: item.genres
+                    }, { onConflict: 'user_id, movie_id' });
+
+                if (error) {
+                    console.error('Ошибка сохранения в Supabase:', error);
+                } else {
+                    console.log('Фильм сохранен в Supabase!');
+                }
+            }
             renderCollection();
         }
 
@@ -1082,14 +1146,14 @@
 
         function updateScoreDisplay() {
             if (currentMode === 'basic') {
-                scoreDisplay.style.display = 'block'; // Показываем большую цифру в базовом режиме
+                scoreDisplay.style.display = 'block';
                 const val = parseFloat(basicSlider.value);
                 totalScore.textContent = val.toFixed(1);
                 document.querySelector('#score-display .slash').textContent = ' / 10';
                 scoreDisplay.classList.remove('gold');
                 updateSliderStyle(basicSlider, '#5b8cff');
             } else {
-                scoreDisplay.style.display = 'none'; // Прячем большую цифру в расширенном режиме
+                scoreDisplay.style.display = 'none';
                 const script = parseFloat(sliders.script.value);
                 const acting = parseFloat(sliders.acting.value);
                 const directing = parseFloat(sliders.directing.value);
@@ -1291,7 +1355,6 @@
         const filterButtons = document.querySelectorAll('#scoreFilterScroll .filter-btn');
         const statusFilterButtons = document.querySelectorAll('#statusFilterScroll .filter-btn');
 
-        // ---- Прокрутка фильтров с кнопками ----
         function setupScrollButtons(wrapperId, scrollContainerId, leftBtnId, rightBtnId) {
             const wrapper = document.getElementById(wrapperId);
             const container = document.getElementById(scrollContainerId);
@@ -1329,7 +1392,6 @@
         setupScrollButtons('scoreFilterWrapper', 'scoreFilterScroll', 'scrollLeftScore', 'scrollRightScore');
         setupScrollButtons('statusFilterWrapper', 'statusFilterScroll', 'scrollLeftStatus', 'scrollRightStatus');
 
-        // ---- Фильтры ----
         filterButtons.forEach(btn => {
             btn.addEventListener('click', function() {
                 filterButtons.forEach(b => b.classList.remove('active'));
@@ -1469,11 +1531,11 @@
             if (mode === 'basic') {
                 modalBasicSection.classList.add('active');
                 modalExtendedSection.classList.remove('active');
-                modalScore.style.display = 'block'; // Показываем
+                modalScore.style.display = 'block';
             } else {
                 modalExtendedSection.classList.add('active');
                 modalBasicSection.classList.remove('active');
-                modalScore.style.display = 'none'; // Прячем в расширенном
+                modalScore.style.display = 'none';
             }
             if (mode === 'basic') {
                 updateSliderStyle(modalBasicSlider, '#5b8cff');
@@ -1567,7 +1629,7 @@
                 modalModeToggle.style.display = 'none';
                 modalBasicSection.classList.add('active');
                 modalExtendedSection.classList.remove('active');
-                modalScore.style.display = 'block'; // Показываем
+                modalScore.style.display = 'block';
             } else {
                 modalModeToggle.style.display = 'flex';
                 modalModeToggle.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
@@ -1575,7 +1637,7 @@
                 if (targetBtn) targetBtn.classList.add('active');
                 modalBasicSection.classList.add('active');
                 modalExtendedSection.classList.remove('active');
-                modalScore.style.display = 'block'; // Показываем (т.к. открывается базовая)
+                modalScore.style.display = 'block';
             }
 
             modalScore.textContent = basicScore.toFixed(1) + ' / 10';
