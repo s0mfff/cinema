@@ -7,8 +7,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== ВСЕ СТИЛИ ОСТАЮТСЯ ТАКИМИ ЖЕ, КАК В ПРЕДЫДУЩЕЙ ВЕРСИИ ===== */
-        /* (я скопирую их полностью, чтобы не потерять) */
+        /* ===== ВСЕ СТИЛИ (без изменений) ===== */
         :root {
             --bg-color: #0b0b0e;
             --card-bg: rgba(28, 30, 36, 0.7);
@@ -57,14 +56,12 @@
             z-index: 1;
         }
         .tab-content.active { display: flex; }
-
         .glass {
             background: var(--glass-bg);
             border: 1px solid var(--card-border);
             border-radius: 16px;
             box-shadow: var(--shadow);
         }
-
         .search-container { position: relative; }
         .search-input, .collection-search {
             width: 100%;
@@ -521,104 +518,6 @@
         }
         .mode-btn:disabled { opacity: 0.4; pointer-events: none; }
 
-        /* --- Модалка ника --- */
-        .nickname-modal .modal-content {
-            max-width: 400px;
-            text-align: center;
-        }
-        .nickname-modal .modal-content h2 {
-            margin-bottom: 10px;
-            color: var(--gold);
-        }
-        .nickname-modal .modal-content p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 16px;
-        }
-        .nickname-input {
-            width: 100%;
-            padding: 14px 16px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--card-border);
-            border-radius: 14px;
-            color: #fff;
-            font-size: 1rem;
-            outline: none;
-            transition: border 0.2s;
-            margin-bottom: 12px;
-        }
-        .nickname-input:focus {
-            border-color: var(--blue-accent);
-        }
-        .nickname-error {
-            color: var(--red-accent);
-            font-size: 0.8rem;
-            margin-top: -8px;
-            margin-bottom: 8px;
-            display: none;
-        }
-
-        /* --- Список пользователей --- */
-        .user-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .user-item {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 12px 16px;
-            background: var(--glass-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 14px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .user-item:hover { background: rgba(255,255,255,0.05); }
-        .user-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--blue-accent), var(--purple-accent));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: #fff;
-            flex-shrink: 0;
-            text-transform: uppercase;
-        }
-        .user-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            pointer-events: none;
-        }
-        .user-nickname {
-            font-weight: 600;
-            font-size: 1rem;
-        }
-        .user-meta {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-        .user-back-btn {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid var(--card-border);
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: 0.2s;
-            align-self: flex-start;
-        }
-        .user-back-btn:hover { background: rgba(255,255,255,0.08); }
-
-        /* --- Модалка --- */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -737,6 +636,101 @@
             margin: 0 0 8px 0;
         }
         .criteria-content .purple-title { color: var(--purple-accent); }
+
+        /* Дополнительные стили для модалки ника */
+        .nickname-modal .modal-content {
+            max-width: 400px;
+            text-align: center;
+        }
+        .nickname-modal .modal-content h2 {
+            margin-bottom: 10px;
+            color: var(--gold);
+        }
+        .nickname-modal .modal-content p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+        .nickname-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.2s;
+            margin-bottom: 12px;
+        }
+        .nickname-input:focus {
+            border-color: var(--blue-accent);
+        }
+        .nickname-error {
+            color: var(--red-accent);
+            font-size: 0.8rem;
+            margin-top: -8px;
+            margin-bottom: 8px;
+            display: none;
+        }
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            background: var(--glass-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .user-item:hover { background: rgba(255,255,255,0.05); }
+        .user-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--blue-accent), var(--purple-accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #fff;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+        .user-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            pointer-events: none;
+        }
+        .user-nickname {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .user-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .user-back-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            align-self: flex-start;
+        }
+        .user-back-btn:hover { background: rgba(255,255,255,0.08); }
 
         @media (max-width: 420px) {
             .score-display { font-size: 2.8rem; }
@@ -894,9 +888,7 @@
 
     <!-- ======== ВКЛАДКА 3: ПОЛЬЗОВАТЕЛИ ======== -->
     <div id="tab-users" class="tab-content">
-        <div id="user-filters">
-            <!-- Здесь будет контейнер для списка пользователей или чужой коллекции -->
-        </div>
+        <div id="user-filters"></div>
         <div id="user-list-wrapper">
             <div id="user-list" class="history-list"></div>
         </div>
@@ -1018,7 +1010,7 @@
 
     <script>
         /* ==========================================================
-           ПОЛНАЯ ЛОГИКА С ПОДДЕРЖКОЙ ПОЛЬЗОВАТЕЛЕЙ
+           НОВАЯ ЛОГИКА С API poiskkino.dev
            ========================================================== */
         const tg = window.Telegram.WebApp;
         tg.ready();
@@ -1029,6 +1021,49 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZybnFjeXl3cHl6aWxob3diYXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNTU5MzIsImV4cCI6MjEwMDYzMTkzMn0.oYMUAspcrdqlZ4Mx9xu-slBYKPGnDSM4FiwH1K6fZxM';
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ---------- НОВЫЙ API КИНОПОИСКА (poiskkino.dev) ----------
+        const KP_API_KEY = 'E3VHSV6-8BXMYKN-HKQQEAV-4376JM9'; // ваш новый токен
+
+        async function searchKinopoisk(query) {
+            const url = `https://api.poiskkino.dev/v1.4/movie/search?page=1&limit=10&query=${encodeURIComponent(query)}`;
+            const resp = await fetch(url, {
+                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            return data.docs.map(f => ({
+                id: f.id,
+                title: f.name || f.alternativeName || 'Без названия',
+                year: f.year ? String(f.year) : 'Неизвестно',
+                image: f.poster?.url || f.poster?.previewUrl || '',
+                rating: f.rating?.kp || 0,
+            }));
+        }
+
+        async function getFilmDetails(filmId) {
+            const url = `https://api.poiskkino.dev/v1.4/movie/${filmId}`;
+            const resp = await fetch(url, {
+                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+
+            const genres = data.genres || [];
+            const isCartoon = genres.some(g => g.name.includes('мультфильм') || g.name.includes('анимация'));
+            let country = 'Неизвестно';
+            if (data.countries && data.countries.length > 0) {
+                country = data.countries.map(c => c.name).join(', ');
+            }
+
+            return {
+                genres: genres.map(g => g.name).join(', '),
+                isCartoon: isCartoon,
+                year: data.year ? String(data.year) : 'Неизвестно',
+                poster: data.poster?.url || data.poster?.previewUrl || '',
+                country: country,
+            };
+        }
 
         // ---------- ХРАНИЛИЩЕ (локальное + облачное) ----------
         const STORAGE_KEY = 'rzt_cinema_history_v2';
@@ -1052,8 +1087,8 @@
         // ---------- ПОЛЬЗОВАТЕЛИ ----------
         const user = tg.initDataUnsafe?.user;
         const USER_ID = user ? user.id : 0;
-        let currentViewUserId = USER_ID; // чей профиль сейчас смотрим (по умолчанию свой)
-        let userNicknames = {};          // кэш { user_id: nickname }
+        let currentViewUserId = USER_ID;
+        let userNicknames = {};
 
         // ---------- ФУНКЦИИ РАБОТЫ С БАЗОЙ ----------
         async function getUserNickname(userId) {
@@ -1069,7 +1104,7 @@
         }
 
         async function setUserNickname(userId, nickname) {
-            // Проверяем, занят ли ник
+            // Проверка на занятость ника
             const { data, error } = await supabaseClient
                 .from('users')
                 .select('user_id')
@@ -1083,7 +1118,7 @@
                 return { success: false, error: 'Занят' };
             }
 
-            // Сохраняем ник
+            // Вставка или обновление
             const { error: upsertError } = await supabaseClient
                 .from('users')
                 .upsert({ user_id: userId, nickname: nickname }, { onConflict: 'user_id' });
@@ -1096,7 +1131,6 @@
         }
 
         async function loadAllUsers() {
-            // Загружаем всех пользователей, у которых есть хотя бы одна оценка
             const { data: ratings, error: rErr } = await supabaseClient
                 .from('user_movies')
                 .select('user_id');
@@ -1105,7 +1139,6 @@
             const userIds = [...new Set(ratings.map(r => r.user_id))];
             if (userIds.length === 0) return [];
 
-            // Получаем ники
             const { data: usersData, error: uErr } = await supabaseClient
                 .from('users')
                 .select('user_id, nickname')
@@ -1116,12 +1149,10 @@
                 const count = ratings.filter(r => r.user_id === u.user_id).length;
                 return { user_id: u.user_id, nickname: u.nickname, count: count };
             });
-            // Сортируем по количеству оценок (по убыванию)
             result.sort((a, b) => b.count - a.count);
             return result;
         }
 
-        // ---------- ЗАГРУЗКА КОЛЛЕКЦИИ ПОЛЬЗОВАТЕЛЯ ----------
         async function loadUserMovies(userId) {
             const { data, error } = await supabaseClient
                 .from('user_movies')
@@ -1174,13 +1205,22 @@
             return 'rank-silver';
         }
 
+        function updateSliderStyle(slider, color) {
+            if (!slider) return;
+            const min = parseFloat(slider.min) || 0;
+            const max = parseFloat(slider.max) || 10;
+            const val = parseFloat(slider.value) || min;
+            const percent = ((val - min) / (max - min)) * 100;
+            slider.style.background = `linear-gradient(to right, ${color} ${percent}%, rgba(255,255,255,0.08) ${percent}%)`;
+        }
+
         // ---------- ОСНОВНЫЕ ПЕРЕМЕННЫЕ ----------
         let selectedFilm = null;
         let currentMode = 'basic';
         let currentScoreFilter = 'all';
         let currentStatusFilter = 'all';
 
-        // DOM-элементы
+        // DOM-элементы (получены ниже)
         const searchInput = document.getElementById('search-input');
         const searchResults = document.getElementById('search-results');
         const selectedRelease = document.getElementById('selected-release');
@@ -1224,15 +1264,6 @@
 
         const scoreDisplay = document.getElementById('score-display');
         const totalScore = document.getElementById('total-score');
-
-        function updateSliderStyle(slider, color) {
-            if (!slider) return;
-            const min = parseFloat(slider.min) || 0;
-            const max = parseFloat(slider.max) || 10;
-            const val = parseFloat(slider.value) || min;
-            const percent = ((val - min) / (max - min)) * 100;
-            slider.style.background = `linear-gradient(to right, ${color} ${percent}%, rgba(255,255,255,0.08) ${percent}%)`;
-        }
 
         // ---------- ПЕРЕКЛЮЧЕНИЕ РЕЖИМОВ ----------
         modeBasicBtn.addEventListener('click', function() {
@@ -1323,48 +1354,7 @@
             sl.addEventListener('input', updateScoreDisplay);
         });
 
-        // ---------- API Кинопоиска ----------
-        const KP_API_KEY = 'ee7d5979-e5d4-4387-854f-46f5f109036f';
-
-        async function searchKinopoisk(query) {
-            const url = `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}&page=1`;
-            const resp = await fetch(url, {
-                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
-            });
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const data = await resp.json();
-            return data.films.map(f => ({
-                id: f.filmId,
-                title: f.nameRu || f.nameEn || f.nameOriginal || 'Без названия',
-                year: f.year || 'Неизвестно',
-                image: f.posterUrlPreview || '',
-                rating: f.rating || 0,
-            }));
-        }
-
-        async function getFilmDetails(filmId) {
-            const url = `https://kinopoiskapiunofficial.tech/api/v2.2/films/${filmId}`;
-            const resp = await fetch(url, {
-                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
-            });
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const data = await resp.json();
-            const genres = data.genres || [];
-            const isCartoon = genres.some(g => g.genre.includes('мультфильм') || g.genre.includes('анимация'));
-            let country = 'Неизвестно';
-            if (data.countries && data.countries.length > 0) {
-                country = data.countries.map(c => c.country).join(', ');
-            }
-            return {
-                genres: genres.map(g => g.genre).join(', '),
-                isCartoon: isCartoon,
-                year: data.year || 'Неизвестно',
-                poster: data.posterUrl || '',
-                country: country,
-            };
-        }
-
-        // ---------- ПОИСК ----------
+        // ---------- ПОИСК (через новый API) ----------
         let searchTimeout = null;
         searchInput.addEventListener('input', () => {
             clearTimeout(searchTimeout);
@@ -1446,7 +1436,7 @@
             updateScoreDisplay();
         }
 
-        // ---------- СОХРАНЕНИЕ ОЦЕНКИ (ТОЛЬКО ДЛЯ СВОЕГО ПРОФИЛЯ) ----------
+        // ---------- СОХРАНЕНИЕ ОЦЕНКИ (только свои) ----------
         document.getElementById('save-btn').addEventListener('click', async () => {
             if (!selectedFilm) {
                 tg.showAlert('Сначала найдите и выберите фильм');
@@ -1484,7 +1474,7 @@
                 extRank = null;
             }
 
-            // Проверяем, есть ли уже такой фильм у пользователя
+            // Проверяем, есть ли уже фильм у пользователя
             const { data: existing, error: existErr } = await supabaseClient
                 .from('user_movies')
                 .select('movie_id')
@@ -1520,7 +1510,7 @@
                 return;
             }
             tg.showAlert('Оценка сохранена!');
-            renderCollection(); // обновляем свою коллекцию
+            renderCollection(USER_ID);
         });
 
         // ---------- КОЛЛЕКЦИЯ (универсальная) ----------
@@ -1536,22 +1526,14 @@
             const leftBtn = document.getElementById(leftBtnId);
             const rightBtn = document.getElementById(rightBtnId);
             if (!wrapper || !container || !leftBtn || !rightBtn) return;
-
             const step = () => container.clientWidth * 0.8;
-
-            leftBtn.addEventListener('click', () => {
-                container.scrollBy({ left: -step(), behavior: 'smooth' });
-            });
-            rightBtn.addEventListener('click', () => {
-                container.scrollBy({ left: step(), behavior: 'smooth' });
-            });
-
+            leftBtn.addEventListener('click', () => container.scrollBy({ left: -step(), behavior: 'smooth' }));
+            rightBtn.addEventListener('click', () => container.scrollBy({ left: step(), behavior: 'smooth' }));
             container.addEventListener('wheel', (e) => {
                 if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) return;
                 e.preventDefault();
                 container.scrollBy({ left: e.deltaX, behavior: 'smooth' });
             }, { passive: false });
-
             function updateButtonsVisibility() {
                 const maxScroll = container.scrollWidth - container.clientWidth;
                 leftBtn.style.display = container.scrollLeft > 0 ? 'flex' : 'none';
@@ -1657,7 +1639,7 @@
         const userList = document.getElementById('user-list');
         const userFilters = document.getElementById('user-filters');
 
-        let isUserListVisible = true; // показываем список пользователей или чужую коллекцию?
+        let isUserListVisible = true;
 
         async function renderUserList() {
             const users = await loadAllUsers();
@@ -1687,7 +1669,6 @@
         function showUserCollection(userId) {
             currentViewUserId = userId;
             isUserListVisible = false;
-            // Скрываем список, показываем коллекцию
             userList.innerHTML = '';
             userFilters.innerHTML = `
                 <button class="user-back-btn" id="user-back-btn">← Назад к списку</button>
@@ -1698,14 +1679,11 @@
             document.getElementById('user-back-btn').addEventListener('click', () => {
                 showUserList();
             });
-            // Загружаем ник пользователя
             (async () => {
                 const nickname = await getUserNickname(userId);
                 const el = document.getElementById('viewed-user-nickname');
                 if (el) el.textContent = nickname || 'Аноним';
             })();
-            // Подключаем те же фильтры, что и в коллекции (переиспользуем их)
-            // Но они уже есть в DOM, просто привяжем к рендеру
             renderCollection(userId);
         }
 
@@ -1714,7 +1692,6 @@
             currentViewUserId = USER_ID;
             userFilters.innerHTML = '';
             renderUserList();
-            // Сбрасываем фильтры на свои
             currentScoreFilter = 'all';
             currentStatusFilter = 'all';
             document.querySelectorAll('#scoreFilterScroll .filter-btn, #statusFilterScroll .filter-btn').forEach(b => b.classList.remove('active'));
@@ -1723,7 +1700,7 @@
             renderCollection(USER_ID);
         }
 
-        // ---------- МОДАЛЬНОЕ ОКНО (с поддержкой просмотра чужих) ----------
+        // ---------- МОДАЛЬНОЕ ОКНО ----------
         const modalOverlay = document.getElementById('modal-overlay');
         const modalClose = document.getElementById('modal-close-btn');
         const modalEditBtn = document.getElementById('modal-edit-btn');
@@ -1881,7 +1858,6 @@
             let rankClass = getRankClass(item);
             modalContent.className = 'modal-content ' + rankClass;
 
-            // Если это не свой профиль – скрываем кнопку редактирования
             if (!isOwn) {
                 modalEditBtn.style.display = 'none';
                 modalSaveEditBtn.style.display = 'none';
@@ -1904,7 +1880,6 @@
             if (e.target === modalOverlay) modalOverlay.classList.remove('active');
         });
 
-        // ---------- РЕДАКТИРОВАНИЕ СВОЕЙ ОЦЕНКИ ----------
         modalEditBtn.addEventListener('click', function() {
             if (!currentModalItemId || currentModalUserId !== USER_ID) return;
             const item = _cachedModalItem;
@@ -1979,7 +1954,6 @@
                 newSliders = vals;
             }
 
-            // Обновляем в БД
             const { error } = await supabaseClient
                 .from('user_movies')
                 .update({
@@ -2064,7 +2038,6 @@
             const nickname = await getUserNickname(USER_ID);
             if (nickname) return;
 
-            // Показываем модалку
             nicknameModal.classList.add('active');
             nicknameInput.value = '';
             nicknameError.style.display = 'none';
@@ -2101,10 +2074,7 @@
 
         // ---------- ИНИЦИАЛИЗАЦИЯ ----------
         async function init() {
-            // Проверяем ник
             await checkAndPromptNickname();
-
-            // Загружаем коллекцию текущего пользователя
             currentViewUserId = USER_ID;
             currentScoreFilter = 'all';
             currentStatusFilter = 'all';
@@ -2117,12 +2087,8 @@
                 }
                 updateSliderStyle(sl, color);
             });
-
-            // Предзагружаем список пользователей (для скорости)
             renderUserList();
         }
-
-        // Запускаем
         init();
     </script>
 </body>
