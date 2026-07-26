@@ -89,6 +89,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
             padding-top: 10px;
         }
         .score-display {
@@ -111,9 +113,10 @@
         .score-display .total {
             display: inline-block;
         }
-        .btn-group { display: flex; gap: 10px; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .action-btn { background: #ffffff; color: #000000; border: none; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
         .save-btn { background: var(--blue-accent); color: #fff; }
+        .similar-btn { background: #2a2b30; color: #fff; }
         .action-btn:active { transform: scale(0.95); }
 
         /* Коллекция */
@@ -180,21 +183,6 @@
             padding: 0 8px;
             border-radius: 4px;
         }
-        .delete-btn {
-            background: rgba(255, 71, 87, 0.1);
-            color: var(--red-accent);
-            border: 1px solid rgba(255, 71, 87, 0.3);
-            border-radius: 8px;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            cursor: pointer;
-            pointer-events: auto;
-        }
-        .delete-btn:active { background: var(--red-accent); color: #fff; }
         .empty-text { color: var(--text-muted); text-align: center; margin-top: 20px; font-size: 0.9rem; }
 
         /* Нижнее меню */
@@ -303,7 +291,6 @@
         .modal-actions .action-btn { flex: 1; min-width: 80px; }
         .modal-actions .edit-btn { background: var(--purple-accent); color: #fff; }
         .modal-actions .save-edit-btn { background: var(--blue-accent); color: #fff; display: none; }
-        .modal-actions .delete-btn { background: var(--red-accent); color: #fff; }
         .modal-actions .kp-link-btn { background: #2a2b30; color: #fff; }
         .edit-mode .modal-actions .save-edit-btn { display: block; }
         .edit-mode .modal-actions .edit-btn { display: none; }
@@ -411,7 +398,10 @@
             <div class="score-display" id="score-display">
                 <span class="total" id="total-score">5.0</span><span class="slash"> / 10</span>
             </div>
-            <button class="action-btn save-btn" id="save-btn">💾 Сохранить</button>
+            <div class="btn-group">
+                <button class="action-btn similar-btn" id="similar-btn">📋 Фильмы с такой оценкой</button>
+                <button class="action-btn save-btn" id="save-btn">💾 Сохранить</button>
+            </div>
         </div>
     </div>
 
@@ -469,7 +459,6 @@
             <div class="modal-actions">
                 <button class="action-btn edit-btn" id="modal-edit-btn">✏️ Изменить</button>
                 <button class="action-btn save-edit-btn" id="modal-save-edit-btn" style="display:none;">💾 Сохранить</button>
-                <button class="action-btn delete-btn" id="modal-delete-btn">🗑️ Удалить</button>
                 <button class="action-btn kp-link-btn" id="modal-kp-btn">🎬 Кинопоиск</button>
             </div>
         </div>
@@ -647,6 +636,15 @@
 
         function getCoef(val) { return 0.80 + (val - 1) * 0.115; }
 
+        // Функция для обновления стиля ползунка (градиент)
+        function updateSliderStyle(slider, color) {
+            const min = parseFloat(slider.min);
+            const max = parseFloat(slider.max);
+            const val = parseFloat(slider.value);
+            const percent = ((val - min) / (max - min)) * 100;
+            slider.style.background = `linear-gradient(to right, ${color} ${percent}%, #2d2e33 ${percent}%)`;
+        }
+
         // Переключение режимов
         modeBasicBtn.addEventListener('click', function() {
             if (selectedFilm && selectedFilm.isCartoon) {
@@ -683,6 +681,8 @@
                 totalScore.textContent = val.toFixed(1);
                 document.querySelector('#score-display .slash').textContent = ' / 10';
                 scoreDisplay.classList.remove('gold');
+                // обновляем стиль ползунка
+                updateSliderStyle(basicSlider, '#3a86ff');
             } else {
                 const script = parseFloat(sliders.script.value);
                 const acting = parseFloat(sliders.acting.value);
@@ -718,6 +718,13 @@
                 valDisplays.visual.textContent = visual.toFixed(1);
                 valDisplays.sound.textContent = sound.toFixed(1);
                 valDisplays.relevance.textContent = relevance.toFixed(1);
+                // обновляем стили ползунков
+                updateSliderStyle(sliders.script, '#3a86ff');
+                updateSliderStyle(sliders.acting, '#3a86ff');
+                updateSliderStyle(sliders.directing, '#3a86ff');
+                updateSliderStyle(sliders.visual, '#8338ec');
+                updateSliderStyle(sliders.sound, '#8338ec');
+                updateSliderStyle(sliders.relevance, '#8338ec');
             }
         }
 
@@ -908,17 +915,12 @@
             // Поиск по тексту
             if (query) data = data.filter(item => item.title.toLowerCase().includes(query));
 
-            // Фильтр по оценке
+            // Фильтр по оценке (используем базовую оценку, приведённую к 10-балльной)
             if (currentScoreFilter !== 'all') {
                 const filterVal = parseFloat(currentScoreFilter);
                 data = data.filter(item => {
-                    // Для базовой оценки округляем до целого
-                    if (item.mode === 'basic') {
-                        return Math.round(item.score) === filterVal;
-                    } else {
-                        // Для расширенной — проверяем, попадает ли в диапазон ранга или просто округляем
-                        return Math.round(item.score) === filterVal;
-                    }
+                    const baseScore = (item.mode === 'basic') ? item.score : (item.score / 30) * 10;
+                    return Math.round(baseScore) === filterVal;
                 });
             }
 
@@ -936,14 +938,15 @@
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 const imgSrc = item.image || 'https://via.placeholder.com/40';
-                let scoreDisplay = '';
+                // Базовая оценка (10-балльная)
+                let baseScore = (item.mode === 'basic') ? item.score : (item.score / 30) * 10;
+                baseScore = Math.round(baseScore * 10) / 10;
+                const scoreDisplayStr = baseScore.toFixed(1) + '/10';
                 let status = '';
                 let isGold = false;
                 if (item.mode === 'basic') {
-                    scoreDisplay = `${item.score.toFixed(1)}/10`;
                     status = 'Базовая';
                 } else {
-                    scoreDisplay = `${item.score.toFixed(2)}`;
                     const rank = getRank(item.score);
                     status = rank.emoji + ' ' + rank.label;
                     if (item.score >= 24) isGold = true;
@@ -955,28 +958,16 @@
                         <div class="history-item-artist">${item.year || 'н/д'} · ${item.type === 'cartoon' ? 'Мультфильм' : 'Фильм'}</div>
                     </div>
                     <div class="history-item-right">
-                        <div class="history-item-score ${isGold ? 'gold' : ''}">${scoreDisplay}</div>
+                        <div class="history-item-score ${isGold ? 'gold' : ''}">${scoreDisplayStr}</div>
                         <span class="history-item-status">${status}</span>
-                        <button class="delete-btn" onclick="deleteItem(${item.id})">×</button>
                     </div>
                 `;
-                div.addEventListener('click', (e) => {
-                    if (e.target.closest('.delete-btn')) return;
+                div.addEventListener('click', () => {
                     openModal(item.id);
                 });
                 collectionList.appendChild(div);
             });
         }
-
-        window.deleteItem = async function(id) {
-            tg.showConfirm('Удалить эту оценку?', async (confirmed) => {
-                if (confirmed) {
-                    let coll = await loadCollection();
-                    coll = coll.filter(item => item.id !== id);
-                    await saveCollection(coll);
-                }
-            });
-        };
 
         collectionSearch.addEventListener('input', renderCollection);
         collectionSort.addEventListener('change', renderCollection);
@@ -988,7 +979,6 @@
         const modalClose = document.getElementById('modal-close-btn');
         const modalEditBtn = document.getElementById('modal-edit-btn');
         const modalSaveEditBtn = document.getElementById('modal-save-edit-btn');
-        const modalDeleteBtn = document.getElementById('modal-delete-btn');
         const modalKpBtn = document.getElementById('modal-kp-btn');
         let currentModalItemId = null;
         let isEditMode = false;
@@ -1025,6 +1015,9 @@
                     </div>
                 `;
                 container.appendChild(div);
+                // Устанавливаем стиль
+                const slider = div.querySelector('input');
+                updateSliderStyle(slider, '#3a86ff');
             } else {
                 const sl = item.sliders || { script: 0, acting: 0, directing: 0, visual: 0, sound: 0, relevance: 0 };
                 const rank = getRank(item.score);
@@ -1048,6 +1041,8 @@
                         <input type="range" id="modal-slider-${f.id}" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.value}" disabled style="background:linear-gradient(to right, ${f.color} ${((f.value-1)/(f.max-1))*100}%, #2d2e33 ${((f.value-1)/(f.max-1))*100}%);" />
                     `;
                     container.appendChild(div);
+                    // Сохраним цвет для дальнейшего использования
+                    div.querySelector('input').dataset.color = f.color;
                 });
             }
 
@@ -1064,11 +1059,59 @@
             if (e.target === modalOverlay) modalOverlay.classList.remove('active');
         });
 
+        // Функция обновления итогового балла в модалке (для расширенного режима)
+        function updateModalScore() {
+            const itemMode = document.querySelector('#modal-sliders-container input[type="range"]')?.id === 'modal-basic-slider' ? 'basic' : 'extended';
+            if (itemMode === 'basic') return;
+            // Получаем значения слайдеров
+            const script = parseFloat(document.getElementById('modal-slider-script').value);
+            const acting = parseFloat(document.getElementById('modal-slider-acting').value);
+            const directing = parseFloat(document.getElementById('modal-slider-directing').value);
+            const visual = parseFloat(document.getElementById('modal-slider-visual').value);
+            const sound = parseFloat(document.getElementById('modal-slider-sound').value);
+            const relevance = parseFloat(document.getElementById('modal-slider-relevance').value);
+            const base = script + acting + directing;
+            const kVisual = getCoef(visual);
+            const kSound = getCoef(sound);
+            const kRelevance = getCoef(relevance);
+            let score = base * kVisual * kSound * kRelevance;
+            score = Math.min(Math.round(score * 100) / 100, 30);
+            // Обновляем отображение
+            document.getElementById('modal-score').textContent = score.toFixed(2);
+            if (score >= 24) {
+                document.getElementById('modal-score').classList.add('gold');
+            } else {
+                document.getElementById('modal-score').classList.remove('gold');
+            }
+            // Обновляем значения справа от слайдеров
+            document.getElementById('modal-val-script').textContent = script.toFixed(1);
+            document.getElementById('modal-val-acting').textContent = acting.toFixed(1);
+            document.getElementById('modal-val-directing').textContent = directing.toFixed(1);
+            document.getElementById('modal-val-visual').textContent = visual.toFixed(1);
+            document.getElementById('modal-val-sound').textContent = sound.toFixed(1);
+            document.getElementById('modal-val-relevance').textContent = relevance.toFixed(1);
+            // Обновляем стили ползунков
+            const sliderIds = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
+            sliderIds.forEach(id => {
+                const slider = document.getElementById(`modal-slider-${id}`);
+                const color = slider.dataset.color || '#3a86ff';
+                updateSliderStyle(slider, color);
+            });
+        }
+
         modalEditBtn.addEventListener('click', function() {
             if (!currentModalItemId) return;
             isEditMode = true;
             const inputs = document.querySelectorAll('#modal-sliders-container input[type="range"]');
-            inputs.forEach(inp => inp.disabled = false);
+            inputs.forEach(inp => {
+                inp.disabled = false;
+                // Навешиваем обработчик изменения
+                inp.addEventListener('input', updateModalScore);
+            });
+            // Если расширенный режим, обновляем сразу
+            if (document.getElementById('modal-slider-script')) {
+                updateModalScore();
+            }
             modalEditBtn.style.display = 'none';
             modalSaveEditBtn.style.display = 'block';
             document.querySelector('.modal-content').classList.add('edit-mode');
@@ -1109,20 +1152,6 @@
             updateBasicHint();
         });
 
-        modalDeleteBtn.addEventListener('click', async function() {
-            if (!currentModalItemId) return;
-            tg.showConfirm('Удалить эту оценку?', async (confirmed) => {
-                if (confirmed) {
-                    let coll = await loadCollection();
-                    coll = coll.filter(item => item.id !== currentModalItemId);
-                    await saveCollection(coll);
-                    modalOverlay.classList.remove('active');
-                    renderCollection();
-                    updateBasicHint();
-                }
-            });
-        });
-
         // ============================================
         // 8. МОДАЛЬНОЕ ОКНО КРИТЕРИЕВ
         // ============================================
@@ -1158,13 +1187,52 @@
         });
 
         // ============================================
-        // 10. ИНИЦИАЛИЗАЦИЯ
+        // 10. КНОПКА "ФИЛЬМЫ С ТАКОЙ ОЦЕНКОЙ"
+        // ============================================
+        document.getElementById('similar-btn').addEventListener('click', function() {
+            // Получаем текущую оценку (базовую, приведённую к 10)
+            let baseScore;
+            if (currentMode === 'basic') {
+                baseScore = parseFloat(basicSlider.value);
+            } else {
+                // Получаем итоговую оценку из totalScore (уже отображается)
+                const scoreText = totalScore.textContent;
+                const score = parseFloat(scoreText);
+                // Пересчитываем в 10-балльную
+                baseScore = (score / 30) * 10;
+            }
+            // Округляем до целого
+            const rounded = Math.round(baseScore);
+            if (rounded < 1 || rounded > 10) {
+                tg.showAlert('Оценка вне допустимого диапазона (1–10)');
+                return;
+            }
+            // Переключаемся на вкладку коллекции
+            document.querySelector('.nav-btn[data-tab="collection"]').click();
+            // Находим кнопку фильтра с нужной оценкой и кликаем
+            const targetBtn = document.querySelector(`.filter-btn[data-score="${rounded}"]`);
+            if (targetBtn) {
+                targetBtn.click();
+            } else {
+                tg.showAlert('Фильтр не найден');
+            }
+        });
+
+        // ============================================
+        // 11. ИНИЦИАЛИЗАЦИЯ
         // ============================================
         async function init() {
             await renderCollection();
             await updateBasicHint();
             // по умолчанию базовый режим
             modeBasicBtn.click();
+            // добавляем обработчики для обновления стилей ползунков при изменении
+            document.querySelectorAll('input[type="range"]').forEach(sl => {
+                sl.addEventListener('input', function() {
+                    // Стиль обновляется в updateScoreDisplay, но для модалки отдельно
+                    // Для основных слайдеров уже есть обработчики
+                });
+            });
         }
         init();
     </script>
