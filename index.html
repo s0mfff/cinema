@@ -6,42 +6,306 @@
     <title>Оценка фильма</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* ===== ОСНОВНЫЕ СТИЛИ ===== */
+        /* ===== ОБНОВЛЁННЫЙ ДИЗАЙН ===== */
         :root {
-            --bg-color: #111113;
-            --card-bg: #1d1e22;
-            --text-color: #ffffff;
-            --text-muted: #8e8f93;
-            --blue-accent: #3a86ff;
-            --purple-accent: #8338ec;
-            --gold: #FFD700;
-            --border-color: #2c2d31;
-            --red-accent: #ff4757;
+            --bg-color: #0b0b0e;
+            --card-bg: rgba(28, 30, 36, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-color: #f0f0f5;
+            --text-muted: #9a9aa8;
+            --blue-accent: #5b8cff;
+            --purple-accent: #a855f7;
+            --gold: #fbbf24;
+            --border-color: rgba(255, 255, 255, 0.06);
+            --red-accent: #f87171;
             --cartoon-color: #9b8fe6;
+            --glass-bg: rgba(20, 22, 28, 0.6);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
         }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: var(--bg-color);
+            background: radial-gradient(circle at 20% 30%, #1a1a2e, #0b0b0e 80%);
             color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             height: 100vh;
             user-select: none;
+            backdrop-filter: blur(2px);
         }
-        .tab-content { display: none; flex-direction: column; gap: 16px; padding: 16px; overflow-y: auto; flex-grow: 1; padding-bottom: 80px; }
+        /* Подложка с текстурой */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDQwIDQwIj48cGF0aCBkPSJNMzAuNSA1LjVMMzUgMTBsLTQuNSA0LjVMMjYgMTBsNC41LTQuNXpNMTAgMjBsNC41IDQuNUwxMCAyOWwtNC41LTQuNUwxMCAyMHoiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAyKSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIi8+PC9zdmc+') repeat;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.3;
+        }
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-bottom: 80px;
+            position: relative;
+            z-index: 1;
+        }
         .tab-content.active { display: flex; }
 
-        /* Специальные стили для вкладки коллекции – фильтры фиксированы, список прокручивается */
+        /* Стеклянные карточки */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px) saturate(1.2);
+            -webkit-backdrop-filter: blur(12px) saturate(1.2);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        /* ===== ОСНОВНЫЕ ЭЛЕМЕНТЫ ===== */
+        .search-container { position: relative; }
+        .search-input, .collection-search {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .search-input:focus, .collection-search:focus {
+            border-color: var(--blue-accent);
+            box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.2);
+        }
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-top: none;
+            border-radius: 0 0 14px 14px;
+            max-height: 260px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+            box-shadow: var(--shadow);
+        }
+        .search-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.15s;
+        }
+        .search-item:hover { background: rgba(255,255,255,0.06); }
+        .search-item img {
+            width: 44px;
+            height: 62px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .search-item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .search-item-title { font-weight: 600; font-size: 0.95rem; }
+        .search-item-artist { font-size: 0.75rem; color: var(--text-muted); }
+        .search-msg { padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+
+        /* Карточка выбранного фильма */
+        .selected-release-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 16px;
+            display: none;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow);
+        }
+        .selected-release-card img {
+            width: 70px;
+            height: 100px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            object-fit: cover;
+        }
+        .release-details { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .release-title { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.3px; }
+        .release-artist { font-size: 0.9rem; color: var(--blue-accent); }
+        .release-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+        .badge {
+            background: rgba(255,255,255,0.06);
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .badge-cartoon { background: rgba(155, 143, 230, 0.2); color: #b8aaff; border-color: #9b8fe6; }
+
+        /* Слайдеры */
+        .sliders-group {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 18px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: var(--shadow);
+        }
+        .sliders-group h2 {
+            margin: 0 0 2px 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .sliders-group h2 .criteria-link {
+            font-size: 0.75rem;
+            color: var(--blue-accent);
+            cursor: pointer;
+            background: none;
+            border: none;
+            text-decoration: none;
+            font-weight: 500;
+            opacity: 0.7;
+            transition: 0.2s;
+        }
+        .sliders-group h2 .criteria-link:hover { opacity: 1; }
+        .blue-group { border-left: 3px solid var(--blue-accent); }
+        .purple-group { border-left: 3px solid var(--purple-accent); }
+
+        .slider-container { display: flex; flex-direction: column; gap: 4px; }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .slider-header .value {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-color);
+        }
+        .blue-group .value { color: var(--blue-accent); }
+        .purple-group .value { color: var(--purple-accent); }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.08);
+            outline: none;
+            transition: background 0.2s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #f0f0f5, #a0a0b0);
+            border: 2px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.08); }
+        input[type="range"]:disabled::-webkit-slider-thumb { background: #555; border-color: #333; cursor: default; transform: none; }
+        input[type="range"]:disabled { opacity: 0.5; }
+
+        .footer-score {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-top: 8px;
+        }
+        .score-display {
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--text-muted);
+            text-shadow: 0 0 20px rgba(255,255,255,0.03);
+            transition: color 0.3s, text-shadow 0.3s;
+            line-height: 1;
+        }
+        .score-display.gold {
+            color: var(--gold) !important;
+            text-shadow: 0 0 60px rgba(251, 191, 36, 0.4) !important;
+        }
+        .score-display .slash {
+            font-size: 1.6rem;
+            color: var(--text-muted);
+            font-weight: 300;
+            margin: 0 4px;
+        }
+        .score-display .total { display: inline-block; }
+
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .action-btn {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 18px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .action-btn:active { transform: scale(0.95); }
+        .save-btn {
+            background: linear-gradient(135deg, var(--blue-accent), #6d28d9);
+            border: none;
+            color: #fff;
+        }
+        .save-btn:hover { box-shadow: 0 0 20px rgba(91, 140, 255, 0.4); }
+        .similar-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* ===== КОЛЛЕКЦИЯ ===== */
         #tab-collection {
-            overflow: hidden; /* убираем прокрутку всей вкладки */
+            overflow: hidden;
             gap: 10px;
-            padding-bottom: 80px; /* место для нижнего меню */
+            padding-bottom: 80px;
         }
         #collection-filters {
-            flex-shrink: 0; /* фильтры не сжимаются */
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -52,7 +316,21 @@
             padding-bottom: 10px;
         }
         .collection-controls { display: flex; gap: 10px; flex-direction: column; }
-        .collection-sort { background: var(--card-bg); color: #fff; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; font-size: 0.9rem; outline: none; }
+        .collection-sort {
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            border: 1px solid var(--card-border);
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239a9aa8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
 
         .score-filter-scroll {
             display: flex;
@@ -64,157 +342,152 @@
         .score-filter-scroll::-webkit-scrollbar { display: none; }
         .score-filter-scroll .filter-btn {
             flex-shrink: 0;
-            padding: 6px 14px;
-            border-radius: 20px;
-            border: 1px solid #2a2b30;
-            background: transparent;
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.02);
             color: #aaa;
             font-size: 0.85rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
         }
         .score-filter-scroll .filter-btn.active {
             border-color: var(--blue-accent);
-            background: #3a86ff22;
+            background: rgba(91, 140, 255, 0.15);
             color: #fff;
+            box-shadow: 0 0 20px rgba(91, 140, 255, 0.1);
         }
-        .score-filter-scroll .filter-btn:active { transform: scale(0.95); }
+        .score-filter-scroll .filter-btn:active { transform: scale(0.92); }
 
-        /* Остальные стили без изменений ... */
-        .search-container { position: relative; }
-        .search-input, .collection-search { width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; color: #fff; font-size: 1rem; outline: none; box-sizing: border-box; }
-        .search-input:focus, .collection-search:focus { border-color: var(--blue-accent); }
-        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: #18191d; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 12px 12px; max-height: 250px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .search-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; }
-        .search-item:hover { background: #25262b; }
-        .search-item img { width: 40px; height: 56px; border-radius: 6px; object-fit: cover; }
-        .search-item-info { display: flex; flex-direction: column; gap: 2px; }
-        .search-item-title { font-weight: 600; font-size: 0.9rem; }
-        .search-item-artist { font-size: 0.75rem; color: var(--text-muted); }
-        .search-msg { padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
-
-        .selected-release-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: none; align-items: center; gap: 16px; }
-        .selected-release-card img { width: 70px; height: 70px; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover; }
-        .release-details { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; }
-        .release-title { font-size: 1.1rem; font-weight: bold; }
-        .release-artist { font-size: 0.9rem; color: var(--blue-accent); }
-        .release-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-        .badge { background: #2c2d31; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase; font-weight: bold; }
-
-        .sliders-group { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-        .sliders-group h2 {
-            margin: 0 0 4px 0;
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .sliders-group h2 .criteria-link {
-            font-size: 0.8rem;
-            color: var(--blue-accent);
-            cursor: pointer;
-            background: none;
-            border: none;
-            text-decoration: underline;
-            font-weight: normal;
-        }
-        .blue-group { border-left: 4px solid var(--blue-accent); }
-        .purple-group { border-left: 4px solid var(--purple-accent); }
-        .slider-container { display: flex; flex-direction: column; gap: 6px; }
-        .slider-header { display: flex; justify-content: space-between; font-size: 0.9rem; }
-        .slider-header .value { font-weight: bold; font-size: 1.1rem; }
-        .blue-group .value { color: var(--blue-accent); }
-        .purple-group .value { color: var(--purple-accent); }
-        input[type="range"] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #2d2e33; outline: none; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle, #ececec 0%, #a2a2a2 100%); border: 2px solid #555; box-shadow: 0 2px 4px rgba(0,0,0,0.4); cursor: pointer; }
-        input[type="range"]:disabled::-webkit-slider-thumb { background: #555; border-color: #333; cursor: default; }
-        input[type="range"]:disabled { opacity: 0.6; }
-
-        .footer-score {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding-top: 10px;
-        }
-        .score-display {
-            font-size: 4rem;
-            font-weight: 900;
-            color: var(--text-muted);
-            text-shadow: 0 0 10px rgba(255,255,255,0.05);
-            transition: color 0.2s, text-shadow 0.2s;
-            line-height: 1;
-        }
-        .score-display.gold {
-            color: var(--gold) !important;
-            text-shadow: 0 0 50px rgba(255, 215, 0, 0.7) !important;
-        }
-        .score-display .slash {
-            font-size: 1.4rem;
-            color: var(--text-muted);
-            font-weight: 400;
-        }
-        .score-display .total {
-            display: inline-block;
-        }
-        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .action-btn { background: #ffffff; color: #000000; border: none; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
-        .save-btn { background: var(--blue-accent); color: #fff; }
-        .similar-btn { background: #2a2b30; color: #fff; }
-        .action-btn:active { transform: scale(0.95); }
-
-        .history-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+        .history-list { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 20px 0; }
         .history-item {
-            border-radius: 12px;
-            padding: 12px 16px;
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--card-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            box-shadow: var(--shadow);
+        }
+        .history-item:hover { transform: scale(1.01); background: rgba(255,255,255,0.04); }
+        .history-item img {
+            width: 44px;
+            height: 62px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .history-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            pointer-events: none;
+        }
+        .history-item-title { font-size: 1rem; font-weight: 600; line-height: 1.2; }
+        .history-item-artist {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .history-item-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            opacity: 0.7;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 2px;
+        }
+        .history-item-meta span { background: rgba(255,255,255,0.04); padding: 0 8px; border-radius: 10px; }
+        .history-item-right {
             display: flex;
             align-items: center;
             gap: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-            border: 1px solid var(--border-color);
+            pointer-events: none;
         }
-        .history-item:hover { filter: brightness(1.2); }
-        .history-item img { width: 40px; height: 56px; border-radius: 6px; object-fit: cover; }
-        .history-item-info { display: flex; flex-direction: column; gap: 2px; flex-grow: 1; pointer-events: none; }
-        .history-item-title { font-size: 1rem; font-weight: bold; line-height: 1.2; }
-        .history-item-artist { font-size: 0.8rem; color: var(--text-muted); }
-        .history-item-right { display: flex; align-items: center; gap: 16px; pointer-events: none; }
         .history-item-score {
             font-size: 1.4rem;
-            font-weight: bold;
+            font-weight: 700;
             color: var(--text-muted);
         }
 
-        /* ===== ЦВЕТНЫЕ ФОНЫ ПО РАСШИРЕННОЙ ОЦЕНКЕ ===== */
-        .history-item.rank-neutral { background: rgba(255,255,255,0.03); border-left: 4px solid #555; }
-        .history-item.rank-silver { background: rgba(201, 201, 201, 0.12); border-left: 4px solid #c9c9c9; }
-        .history-item.rank-gold   { background: rgba(255, 204, 0, 0.15); border-left: 4px solid #ffcc00; }
-        .history-item.rank-emerald{ background: rgba(31, 139, 77, 0.15); border-left: 4px solid #1f8b4d; }
-        .history-item.rank-sapphire{ background: rgba(34, 125, 186, 0.15); border-left: 4px solid #227dba; }
-        .history-item.rank-ruby   { background: rgba(231, 76, 60, 0.15); border-left: 4px solid #e74c3c; }
-        .history-item.rank-cartoon { background: rgba(155, 143, 230, 0.15); border-left: 4px solid #9b8fe6; }
+        /* Цветные фоны */
+        .history-item.rank-neutral { border-left: 4px solid #555; }
+        .history-item.rank-silver { border-left: 4px solid #c9c9c9; background: rgba(201,201,201,0.05); }
+        .history-item.rank-gold   { border-left: 4px solid #fbbf24; background: rgba(251,191,36,0.06); }
+        .history-item.rank-emerald{ border-left: 4px solid #34d399; background: rgba(52,211,153,0.06); }
+        .history-item.rank-sapphire{ border-left: 4px solid #60a5fa; background: rgba(96,165,250,0.06); }
+        .history-item.rank-ruby   { border-left: 4px solid #f87171; background: rgba(248,113,113,0.06); }
+        .history-item.rank-cartoon { border-left: 4px solid #9b8fe6; background: rgba(155,143,230,0.06); }
 
-        .empty-text { color: var(--text-muted); text-align: center; margin-top: 20px; font-size: 0.9rem; }
+        .empty-text { color: var(--text-muted); text-align: center; margin-top: 30px; font-size: 0.95rem; opacity: 0.6; }
 
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #111113; border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0 20px 0; z-index: 100; }
-        .nav-btn { background: none; border: none; color: var(--text-muted); font-size: 1rem; font-weight: bold; padding: 10px 20px; cursor: pointer; border-radius: 20px; transition: 0.2s; }
-        .nav-btn.active { background: var(--card-bg); color: var(--blue-accent); }
+        /* Нижнее меню */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(11, 11, 14, 0.8);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 24px 0;
+            z-index: 100;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .nav-btn.active {
+            background: rgba(91, 140, 255, 0.12);
+            color: var(--blue-accent);
+            box-shadow: 0 0 20px rgba(91, 140, 255, 0.05);
+        }
 
-        .mode-toggle { display: flex; gap: 10px; margin: 8px 0; }
-        .mode-btn { flex: 1; background: #444; color: #fff; border: none; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        .mode-btn.active { background: var(--blue-accent); }
-        .mode-btn:active { transform: scale(0.95); }
-        .mode-btn:disabled { opacity: 0.5; pointer-events: none; }
+        .mode-toggle { display: flex; gap: 10px; margin: 4px 0; }
+        .mode-btn {
+            flex: 1;
+            background: rgba(255,255,255,0.03);
+            color: var(--text-muted);
+            border: 1px solid var(--card-border);
+            padding: 10px;
+            border-radius: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .mode-btn.active {
+            background: linear-gradient(135deg, var(--blue-accent), #6d28d9);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 16px rgba(91, 140, 255, 0.3);
+        }
+        .mode-btn:disabled { opacity: 0.4; pointer-events: none; }
 
-        /* ===== МОДАЛЬНОЕ ОКНО ===== */
+        /* Модальное окно */
         .modal-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
             z-index: 200;
             justify-content: center;
             align-items: center;
@@ -222,32 +495,34 @@
         }
         .modal-overlay.active { display: flex; }
         .modal-content {
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
             max-width: 480px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            padding: 20px;
+            padding: 24px 20px;
             position: relative;
-            transition: background 0.3s;
+            box-shadow: var(--shadow);
         }
-        .modal-content.rank-neutral { background: #2a2a2a; }
-        .modal-content.rank-silver { background: #2a2a2a; }
-        .modal-content.rank-gold   { background: #3d3a1a; }
-        .modal-content.rank-emerald{ background: #0a3a1a; }
-        .modal-content.rank-sapphire{ background: #0a2a4a; }
-        .modal-content.rank-ruby   { background: #4a0a0a; }
-        .modal-content.rank-cartoon{ background: #2a234a; }
+        .modal-content.rank-neutral { background: rgba(30,30,40,0.8); }
+        .modal-content.rank-silver { background: rgba(40,40,50,0.8); }
+        .modal-content.rank-gold   { background: rgba(60,50,20,0.8); }
+        .modal-content.rank-emerald{ background: rgba(20,50,30,0.8); }
+        .modal-content.rank-sapphire{ background: rgba(20,40,70,0.8); }
+        .modal-content.rank-ruby   { background: rgba(70,20,20,0.8); }
+        .modal-content.rank-cartoon{ background: rgba(40,30,70,0.8); }
 
         .modal-close {
             position: sticky;
             top: 0;
             float: right;
-            background: var(--card-bg);
+            background: rgba(255,255,255,0.05);
             border: none;
             color: #fff;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             width: 36px;
             height: 36px;
             border-radius: 50%;
@@ -256,24 +531,33 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 10px;
-            z-index: 5;
+            backdrop-filter: blur(4px);
+            transition: 0.2s;
         }
-        .modal-close:active { transform: scale(0.9); }
+        .modal-close:hover { background: rgba(255,255,255,0.1); }
         .modal-release-header {
             display: flex;
-            gap: 12px;
+            gap: 14px;
             margin-bottom: 16px;
         }
         .modal-release-header img {
             width: 60px;
-            height: 80px;
-            border-radius: 8px;
+            height: 84px;
+            border-radius: 10px;
             object-fit: cover;
+            border: 1px solid rgba(255,255,255,0.05);
         }
-        .modal-release-header .info { display: flex; flex-direction: column; gap: 2px; }
-        .modal-release-header .info .title { font-size: 1.1rem; font-weight: bold; }
+        .modal-release-header .info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .modal-release-header .info .title { font-size: 1.2rem; font-weight: 700; }
         .modal-release-header .info .artist { color: var(--blue-accent); font-size: 0.9rem; }
-        .modal-release-header .info .meta { color: var(--text-muted); font-size: 0.8rem; }
+        .modal-release-header .info .meta {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .modal-release-header .info .meta span { background: rgba(255,255,255,0.04); padding: 0 10px; border-radius: 12px; }
 
         .modal-sliders-section { display: none; }
         .modal-sliders-section.active { display: block; }
@@ -284,31 +568,32 @@
             color: var(--text-muted);
             text-align: center;
             margin: 12px 0;
-            transition: color 0.2s, text-shadow 0.2s;
+            transition: color 0.3s, text-shadow 0.3s;
         }
         .modal-score.gold {
             color: var(--gold) !important;
-            text-shadow: 0 0 40px rgba(255, 215, 0, 0.4) !important;
+            text-shadow: 0 0 40px rgba(251, 191, 36, 0.3) !important;
         }
         .modal-actions {
             display: flex;
             gap: 10px;
             justify-content: center;
-            margin-top: 12px;
+            margin-top: 16px;
             flex-wrap: wrap;
         }
         .modal-actions .action-btn { flex: 1; min-width: 80px; }
-        .modal-actions .edit-btn { background: var(--purple-accent); color: #fff; }
-        .modal-actions .save-edit-btn { background: var(--blue-accent); color: #fff; display: none; }
-        .modal-actions .kp-link-btn { background: #2a2b30; color: #fff; }
+        .modal-actions .edit-btn { background: linear-gradient(135deg, var(--purple-accent), #7c3aed); border: none; color: #fff; }
+        .modal-actions .save-edit-btn { background: linear-gradient(135deg, var(--blue-accent), #6d28d9); border: none; color: #fff; display: none; }
+        .modal-actions .kp-link-btn { background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); color: #fff; }
         .edit-mode .modal-actions .save-edit-btn { display: block; }
         .edit-mode .modal-actions .edit-btn { display: none; }
 
         .criteria-content { padding: 8px 0; }
         .criteria-content h3 {
             color: var(--blue-accent);
-            margin: 12px 0 4px 0;
-            font-size: 1.1rem;
+            margin: 16px 0 4px 0;
+            font-size: 1rem;
+            font-weight: 600;
         }
         .criteria-content p {
             color: var(--text-muted);
@@ -316,8 +601,14 @@
             line-height: 1.5;
             margin: 0 0 8px 0;
         }
-        .criteria-content .purple-title {
-            color: var(--purple-accent);
+        .criteria-content .purple-title { color: var(--purple-accent); }
+
+        /* Адаптив */
+        @media (max-width: 420px) {
+            .score-display { font-size: 3rem; }
+            .modal-score { font-size: 2.8rem; }
+            .history-item { padding: 12px; gap: 10px; }
+            .history-item img { width: 36px; height: 50px; }
         }
     </style>
 </head>
@@ -339,15 +630,16 @@
                 <div id="release-artist" class="release-artist">Год · Жанры</div>
                 <div class="release-meta">
                     <span id="release-type" class="badge">Фильм</span>
-                    <span id="release-extra"></span>
+                    <span id="release-country" class="badge">🌍 Страна</span>
+                    <span id="release-director" class="badge">🎬 Режиссёр</span>
                 </div>
             </div>
         </div>
 
-        <!-- Базовый режим (слайдеры) -->
+        <!-- Базовый режим -->
         <div id="basic-sliders" class="sliders-group blue-group">
             <h2>
-                Оценка фильма
+                ⭐ Оценка фильма
                 <button class="criteria-link" id="criteria-btn">Критерии оценки</button>
             </h2>
             <div class="slider-container">
@@ -359,7 +651,7 @@
         <!-- Расширенный режим -->
         <div id="extended-sliders" class="sliders-group blue-group" style="display:none;">
             <h2>
-                Базовые показатели
+                📝 Базовые показатели
                 <button class="criteria-link" id="criteria-btn-ext">Критерии оценки</button>
             </h2>
             <div class="slider-container">
@@ -376,7 +668,7 @@
             </div>
         </div>
         <div id="extended-multipliers" class="sliders-group purple-group" style="display:none;">
-            <h2>Множители</h2>
+            <h2>🎛️ Множители</h2>
             <div class="slider-container">
                 <div class="slider-header"><span>Визуал и операторская</span><span class="value" id="val-visual">3.0</span></div>
                 <input type="range" id="slider-visual" min="1" max="5" step="1" value="3">
@@ -389,10 +681,10 @@
                 <div class="slider-header"><span>Актуальность / Смысл</span><span class="value" id="val-relevance">3.0</span></div>
                 <input type="range" id="slider-relevance" min="1" max="5" step="1" value="3">
             </div>
-            <div class="result-box" style="background:var(--card-bg); border-radius:12px; padding:12px; margin-top:8px; text-align:center;">
-                <div style="font-size:1.2rem; font-weight:bold;" id="extended-score">16.20</div>
+            <div class="result-box" style="background:rgba(255,255,255,0.03); border-radius:14px; padding:14px; margin-top:6px; text-align:center; border:1px solid rgba(255,255,255,0.04);">
+                <div style="font-size:1.3rem; font-weight:700;" id="extended-score">16.20</div>
                 <div style="font-size:0.9rem; color:var(--text-muted);" id="extended-rank">💎 Изумрудный фильм</div>
-                <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; font-size:0.7rem; color:var(--text-muted); margin-top:6px;">
+                <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; font-size:0.7rem; color:var(--text-muted); margin-top:6px;">
                     <span>Базовые: <span id="base-sum">9.0</span></span>
                     <span>Визуал: <span id="coef-visual">1.03</span></span>
                     <span>Саунд: <span id="coef-sound">1.03</span></span>
@@ -406,7 +698,7 @@
                 <span class="total" id="total-score">5.0</span><span class="slash"> / 10</span>
             </div>
             <div class="btn-group">
-                <button class="action-btn similar-btn" id="similar-btn">📋 Фильмы с такой оценкой</button>
+                <button class="action-btn similar-btn">📋 Фильмы с такой оценкой</button>
                 <button class="action-btn save-btn" id="save-btn">💾 Сохранить</button>
             </div>
         </div>
@@ -414,7 +706,6 @@
 
     <!-- ======== ВКЛАДКА 2: КОЛЛЕКЦИЯ ======== -->
     <div id="tab-collection" class="tab-content">
-        <!-- Блок фильтров – фиксируется -->
         <div id="collection-filters">
             <div class="collection-controls">
                 <input type="text" id="collection-search" class="collection-search" placeholder="Поиск в коллекции..." autocomplete="off">
@@ -424,8 +715,6 @@
                     <option value="lowest">Сначала низкие баллы</option>
                 </select>
             </div>
-
-            <!-- Фильтр по баллам -->
             <div class="score-filter-scroll" id="scoreFilterScroll">
                 <button class="filter-btn active" data-score="all">Все</button>
                 <button class="filter-btn" data-score="1">1</button>
@@ -439,8 +728,6 @@
                 <button class="filter-btn" data-score="9">9</button>
                 <button class="filter-btn" data-score="10">10</button>
             </div>
-
-            <!-- Фильтр по статусам (рангам) + мультфильмы -->
             <div class="score-filter-scroll" id="statusFilterScroll">
                 <button class="filter-btn active" data-status="all">Все</button>
                 <button class="filter-btn" data-status="Серебряный">🥈 Серебряный</button>
@@ -451,8 +738,6 @@
                 <button class="filter-btn" data-status="Мультфильмы">🎨 Мультфильмы</button>
             </div>
         </div>
-
-        <!-- Список коллекции – прокручивается -->
         <div id="collection-list-wrapper">
             <div id="collection-list" class="history-list"></div>
         </div>
@@ -460,8 +745,8 @@
 
     <!-- ======== НИЖНЕЕ МЕНЮ ======== -->
     <div class="bottom-nav">
-        <button class="nav-btn active" data-tab="rating">Оценка</button>
-        <button class="nav-btn" data-tab="collection">Моя коллекция</button>
+        <button class="nav-btn active" data-tab="rating">⭐ Оценка</button>
+        <button class="nav-btn" data-tab="collection">📚 Моя коллекция</button>
     </div>
 
     <!-- ======== МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ ======== -->
@@ -472,8 +757,12 @@
                 <img id="modal-img" src="" alt="Постер">
                 <div class="info">
                     <div class="title" id="modal-title">Название</div>
-                    <div class="artist" id="modal-artist">Год</div>
-                    <div class="meta" id="modal-meta">Фильм</div>
+                    <div class="artist" id="modal-artist">Год · Жанры</div>
+                    <div class="meta">
+                        <span id="modal-type" class="badge">Фильм</span>
+                        <span id="modal-country" class="badge">🌍 Страна</span>
+                        <span id="modal-director" class="badge">🎬 Режиссёр</span>
+                    </div>
                 </div>
             </div>
 
@@ -482,7 +771,6 @@
                 <button class="mode-btn" data-modal-mode="extended">📊 Расширенная</button>
             </div>
 
-            <!-- Секция базовой оценки -->
             <div id="modal-basic-section" class="modal-sliders-section active">
                 <div class="sliders-group blue-group">
                     <div class="slider-container">
@@ -492,7 +780,6 @@
                 </div>
             </div>
 
-            <!-- Секция расширенной оценки -->
             <div id="modal-extended-section" class="modal-sliders-section">
                 <div class="sliders-group blue-group">
                     <div class="slider-container">
@@ -521,8 +808,8 @@
                         <div class="slider-header"><span>Актуальность / Смысл</span><span class="value" id="modal-val-relevance">3.0</span></div>
                         <input type="range" id="modal-slider-relevance" min="1" max="5" step="1" value="3" disabled />
                     </div>
-                    <div class="result-box" style="background:var(--card-bg); border-radius:12px; padding:12px; margin-top:8px; text-align:center;">
-                        <div style="font-size:1.2rem; font-weight:bold;" id="modal-extended-score">16.20</div>
+                    <div class="result-box" style="background:rgba(255,255,255,0.03); border-radius:14px; padding:14px; margin-top:6px; text-align:center; border:1px solid rgba(255,255,255,0.04);">
+                        <div style="font-size:1.3rem; font-weight:700;" id="modal-extended-score">16.20</div>
                         <div style="font-size:0.9rem; color:var(--text-muted);" id="modal-extended-rank">💎 Изумрудный фильм</div>
                     </div>
                 </div>
@@ -568,7 +855,7 @@
         tg.expand();
 
         // ---------- Хранилище ----------
-        const STORAGE_KEY = 'rzt_cinema_history';
+        const STORAGE_KEY = 'rzt_cinema_history_v2';
 
         function cloudGet(key) {
             return new Promise((resolve) => {
@@ -626,17 +913,32 @@
             const data = await resp.json();
             const genres = data.genres || [];
             const isCartoon = genres.some(g => g.genre.includes('мультфильм') || g.genre.includes('анимация'));
+            // Страна
+            let country = 'Неизвестно';
+            if (data.countries && data.countries.length > 0) {
+                country = data.countries.map(c => c.country).join(', ');
+            }
+            // Режиссёр
+            let director = 'Неизвестно';
+            if (data.persons) {
+                const dirs = data.persons.filter(p => p.professionKey === 'DIRECTOR');
+                if (dirs.length > 0) {
+                    director = dirs.map(d => d.nameRu || d.nameEn || d.nameOriginal).join(', ');
+                }
+            }
             return {
                 genres: genres.map(g => g.genre).join(', '),
                 isCartoon: isCartoon,
                 year: data.year || 'Неизвестно',
                 poster: data.posterUrl || '',
+                country: country,
+                director: director,
             };
         }
 
         // ---------- Основные переменные ----------
         let selectedFilm = null;
-        let currentMode = 'basic'; // 'basic' или 'extended'
+        let currentMode = 'basic';
         let currentScoreFilter = 'all';
         let currentStatusFilter = 'all';
 
@@ -648,7 +950,8 @@
         const releaseTitle = document.getElementById('release-title');
         const releaseArtist = document.getElementById('release-artist');
         const releaseType = document.getElementById('release-type');
-        const releaseExtra = document.getElementById('release-extra');
+        const releaseCountry = document.getElementById('release-country');
+        const releaseDirector = document.getElementById('release-director');
 
         const modeBasicBtn = document.getElementById('mode-basic');
         const modeExtendedBtn = document.getElementById('mode-extended');
@@ -685,7 +988,7 @@
         const scoreDisplay = document.getElementById('score-display');
         const totalScore = document.getElementById('total-score');
 
-        // Ранги для расширенной оценки (30-балльная шкала)
+        // Ранги
         const extRanks = [
             { min: 0.34, max: 5.99, label: 'Серебряный', emoji: '🥈' },
             { min: 6, max: 11.99, label: 'Золотой', emoji: '🥇' },
@@ -701,17 +1004,16 @@
 
         function getCoef(val) { return 0.80 + (val - 1) * 0.115; }
 
-        // ---------- Функция для обновления стиля ползунка (градиент) ----------
         function updateSliderStyle(slider, color) {
             if (!slider) return;
             const min = parseFloat(slider.min) || 0;
             const max = parseFloat(slider.max) || 10;
             const val = parseFloat(slider.value) || min;
             const percent = ((val - min) / (max - min)) * 100;
-            slider.style.background = `linear-gradient(to right, ${color} ${percent}%, #2d2e33 ${percent}%)`;
+            slider.style.background = `linear-gradient(to right, ${color} ${percent}%, rgba(255,255,255,0.08) ${percent}%)`;
         }
 
-        // ---------- Переключение режимов (основное окно) ----------
+        // ---------- Переключение режимов ----------
         modeBasicBtn.addEventListener('click', function() {
             if (selectedFilm && selectedFilm.isCartoon) {
                 tg.showAlert('Для мультфильмов доступна только базовая оценка');
@@ -740,14 +1042,13 @@
             updateScoreDisplay();
         });
 
-        // ---------- Обновление отображения оценки (основное окно) ----------
         function updateScoreDisplay() {
             if (currentMode === 'basic') {
                 const val = parseFloat(basicSlider.value);
                 totalScore.textContent = val.toFixed(1);
                 document.querySelector('#score-display .slash').textContent = ' / 10';
                 scoreDisplay.classList.remove('gold');
-                updateSliderStyle(basicSlider, '#3a86ff');
+                updateSliderStyle(basicSlider, '#5b8cff');
             } else {
                 const script = parseFloat(sliders.script.value);
                 const acting = parseFloat(sliders.acting.value);
@@ -781,17 +1082,15 @@
                 valDisplays.visual.textContent = visual.toFixed(1);
                 valDisplays.sound.textContent = sound.toFixed(1);
                 valDisplays.relevance.textContent = relevance.toFixed(1);
-                // Обновляем стили всех расширенных слайдеров
-                updateSliderStyle(sliders.script, '#3a86ff');
-                updateSliderStyle(sliders.acting, '#3a86ff');
-                updateSliderStyle(sliders.directing, '#3a86ff');
-                updateSliderStyle(sliders.visual, '#8338ec');
-                updateSliderStyle(sliders.sound, '#8338ec');
-                updateSliderStyle(sliders.relevance, '#8338ec');
+                updateSliderStyle(sliders.script, '#5b8cff');
+                updateSliderStyle(sliders.acting, '#5b8cff');
+                updateSliderStyle(sliders.directing, '#5b8cff');
+                updateSliderStyle(sliders.visual, '#a855f7');
+                updateSliderStyle(sliders.sound, '#a855f7');
+                updateSliderStyle(sliders.relevance, '#a855f7');
             }
         }
 
-        // События слайдеров (основное окно)
         basicSlider.addEventListener('input', () => {
             const val = parseFloat(basicSlider.value);
             basicVal.textContent = val.toFixed(1);
@@ -812,7 +1111,7 @@
                 searchResults.style.display = 'none';
                 return;
             }
-            searchResults.innerHTML = '<div class="search-msg">Ищем...</div>';
+            searchResults.innerHTML = '<div class="search-msg">🔍 Ищем...</div>';
             searchResults.style.display = 'block';
             searchTimeout = setTimeout(() => {
                 performSearch(query);
@@ -830,7 +1129,7 @@
                     try {
                         const details = await getFilmDetails(f.id);
                         return { ...f, ...details };
-                    } catch { return { ...f, genres: 'Неизвестно', isCartoon: false }; }
+                    } catch { return { ...f, genres: 'Неизвестно', isCartoon: false, country: 'Неизвестно', director: 'Неизвестно' }; }
                 }));
                 searchResults.innerHTML = enriched.map(f => `
                     <div class="search-item" data-id="${f.id}">
@@ -838,8 +1137,12 @@
                         <div class="search-item-info">
                             <div class="search-item-title">${f.title}</div>
                             <div class="search-item-artist">${f.year} · ${f.genres || '—'}</div>
+                            <div style="font-size:0.7rem; color:var(--text-muted); display:flex; gap:6px; flex-wrap:wrap;">
+                                <span>🌍 ${f.country}</span>
+                                <span>🎬 ${f.director}</span>
+                            </div>
                         </div>
-                        <span class="badge" style="${f.isCartoon ? 'background:#8338ec;color:#fff;' : ''}">${f.isCartoon ? '🎨 Мульт' : '🎬 Фильм'}</span>
+                        <span class="badge ${f.isCartoon ? 'badge-cartoon' : ''}">${f.isCartoon ? '🎨 Мульт' : '🎬 Фильм'}</span>
                     </div>
                 `).join('');
                 document.querySelectorAll('.search-item').forEach(el => {
@@ -863,7 +1166,9 @@
             releaseTitle.textContent = film.title;
             releaseArtist.textContent = `${film.year} · ${film.genres || '—'}`;
             releaseType.textContent = film.isCartoon ? 'Мультфильм' : 'Фильм';
-            releaseExtra.textContent = '';
+            releaseType.className = 'badge' + (film.isCartoon ? ' badge-cartoon' : '');
+            releaseCountry.textContent = `🌍 ${film.country || 'Неизвестно'}`;
+            releaseDirector.textContent = `🎬 ${film.director || 'Неизвестно'}`;
 
             if (film.isCartoon) {
                 modeBasicBtn.click();
@@ -881,7 +1186,7 @@
             updateScoreDisplay();
         }
 
-        // ---------- СОХРАНЕНИЕ (основное окно) ----------
+        // ---------- СОХРАНЕНИЕ ----------
         document.getElementById('save-btn').addEventListener('click', async () => {
             if (!selectedFilm) {
                 tg.showAlert('Сначала найдите и выберите фильм');
@@ -928,7 +1233,10 @@
                 basicScore: basicScore,
                 extendedScore: extendedScoreVal,
                 sliders: slidersData,
-                extRank: extRank
+                extRank: extRank,
+                country: selectedFilm.country || 'Неизвестно',
+                director: selectedFilm.director || 'Неизвестно',
+                genres: selectedFilm.genres || '—',
             };
 
             if (coll.some(el => el.id === item.id)) {
@@ -1002,7 +1310,7 @@
 
             collectionList.innerHTML = '';
             if (data.length === 0) {
-                collectionList.innerHTML = '<div class="empty-text">Ничего не найдено</div>';
+                collectionList.innerHTML = '<div class="empty-text">📭 Ничего не найдено</div>';
                 return;
             }
             data.forEach(item => {
@@ -1017,6 +1325,10 @@
                     <div class="history-item-info">
                         <div class="history-item-title">${item.title}</div>
                         <div class="history-item-artist">${item.year || 'н/д'} · ${item.type === 'cartoon' ? 'Мультфильм' : 'Фильм'}</div>
+                        <div class="history-item-meta">
+                            <span>🌍 ${item.country || 'Неизвестно'}</span>
+                            <span>🎬 ${item.director || 'Неизвестно'}</span>
+                        </div>
                     </div>
                     <div class="history-item-right">
                         <div class="history-item-score">${scoreDisplayStr}</div>
@@ -1045,9 +1357,20 @@
         const modalBasicVal = document.getElementById('modal-basic-val');
         const modalScore = document.getElementById('modal-score');
         const modalContent = document.getElementById('modal-content');
+        const modalType = document.getElementById('modal-type');
+        const modalCountry = document.getElementById('modal-country');
+        const modalDirector = document.getElementById('modal-director');
 
         let currentModalItemId = null;
         let isEditMode = false;
+        let _cachedModalItem = null;
+
+        async function getCurrentModalItem() {
+            if (!currentModalItemId) return null;
+            const coll = await loadCollection();
+            return coll.find(el => el.id === currentModalItemId) || null;
+        }
+        function getCurrentModalItemSync() { return _cachedModalItem; }
 
         modalModeToggle.addEventListener('click', function(e) {
             const btn = e.target.closest('.mode-btn');
@@ -1069,28 +1392,16 @@
                 modalBasicSection.classList.remove('active');
             }
             if (mode === 'basic') {
-                updateSliderStyle(modalBasicSlider, '#3a86ff');
+                updateSliderStyle(modalBasicSlider, '#5b8cff');
             } else {
                 const extIds = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
                 extIds.forEach(id => {
                     const sl = document.getElementById(`modal-slider-${id}`);
-                    const color = (id === 'script' || id === 'acting' || id === 'directing') ? '#3a86ff' : '#8338ec';
+                    const color = (id === 'script' || id === 'acting' || id === 'directing') ? '#5b8cff' : '#a855f7';
                     updateSliderStyle(sl, color);
                 });
             }
         });
-
-        // Синхронная версия для быстрого доступа (не асинхронная)
-        let _cachedModalItem = null;
-        async function getCurrentModalItem() {
-            if (!currentModalItemId) return null;
-            const coll = await loadCollection();
-            return coll.find(el => el.id === currentModalItemId) || null;
-        }
-        function getCurrentModalItemSync() {
-            // Используем кеш, который обновляется при открытии модалки
-            return _cachedModalItem;
-        }
 
         function updateModalExtendedScore() {
             const script = parseFloat(document.getElementById('modal-slider-script').value);
@@ -1114,12 +1425,12 @@
             document.getElementById('modal-val-visual').textContent = visual.toFixed(1);
             document.getElementById('modal-val-sound').textContent = sound.toFixed(1);
             document.getElementById('modal-val-relevance').textContent = relevance.toFixed(1);
-            updateSliderStyle(document.getElementById('modal-slider-script'), '#3a86ff');
-            updateSliderStyle(document.getElementById('modal-slider-acting'), '#3a86ff');
-            updateSliderStyle(document.getElementById('modal-slider-directing'), '#3a86ff');
-            updateSliderStyle(document.getElementById('modal-slider-visual'), '#8338ec');
-            updateSliderStyle(document.getElementById('modal-slider-sound'), '#8338ec');
-            updateSliderStyle(document.getElementById('modal-slider-relevance'), '#8338ec');
+            updateSliderStyle(document.getElementById('modal-slider-script'), '#5b8cff');
+            updateSliderStyle(document.getElementById('modal-slider-acting'), '#5b8cff');
+            updateSliderStyle(document.getElementById('modal-slider-directing'), '#5b8cff');
+            updateSliderStyle(document.getElementById('modal-slider-visual'), '#a855f7');
+            updateSliderStyle(document.getElementById('modal-slider-sound'), '#a855f7');
+            updateSliderStyle(document.getElementById('modal-slider-relevance'), '#a855f7');
         }
 
         async function openModal(id) {
@@ -1132,8 +1443,11 @@
 
             document.getElementById('modal-img').src = item.image || 'https://via.placeholder.com/60';
             document.getElementById('modal-title').textContent = item.title;
-            document.getElementById('modal-artist').textContent = item.year || 'н/д';
-            document.getElementById('modal-meta').textContent = item.type === 'cartoon' ? 'Мультфильм' : 'Фильм';
+            document.getElementById('modal-artist').textContent = `${item.year || 'н/д'} · ${item.genres || '—'}`;
+            modalType.textContent = item.type === 'cartoon' ? 'Мультфильм' : 'Фильм';
+            modalType.className = 'badge' + (item.type === 'cartoon' ? ' badge-cartoon' : '');
+            modalCountry.textContent = `🌍 ${item.country || 'Неизвестно'}`;
+            modalDirector.textContent = `🎬 ${item.director || 'Неизвестно'}`;
 
             modalKpBtn.onclick = function() {
                 tg.openLink(`https://www.kinopoisk.ru/film/${item.id}/`);
@@ -1142,7 +1456,7 @@
             const basicScore = item.basicScore || 0;
             modalBasicSlider.value = basicScore;
             modalBasicVal.textContent = basicScore.toFixed(1);
-            updateSliderStyle(modalBasicSlider, '#3a86ff');
+            updateSliderStyle(modalBasicSlider, '#5b8cff');
 
             const hasExtended = item.extendedScore !== null && item.extendedScore !== undefined && item.type !== 'cartoon';
             const sl = item.sliders || { script: 3, acting: 3, directing: 3, visual: 3, sound: 3, relevance: 3 };
@@ -1161,7 +1475,7 @@
                 const extIds = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
                 extIds.forEach(id => {
                     const sl2 = document.getElementById(`modal-slider-${id}`);
-                    sl2.style.background = '#2d2e33';
+                    sl2.style.background = 'rgba(255,255,255,0.05)';
                 });
             }
 
@@ -1181,6 +1495,7 @@
 
             modalScore.textContent = basicScore.toFixed(1) + ' / 10';
             modalScore.className = 'modal-score';
+            if (basicScore >= 9) modalScore.classList.add('gold');
 
             let rankClass = getRankClass(item);
             modalContent.className = 'modal-content ' + rankClass;
@@ -1209,7 +1524,9 @@
                         const val = parseFloat(this.value);
                         modalBasicVal.textContent = val.toFixed(1);
                         modalScore.textContent = val.toFixed(1) + ' / 10';
-                        updateSliderStyle(this, '#3a86ff');
+                        if (val >= 9) modalScore.classList.add('gold');
+                        else modalScore.classList.remove('gold');
+                        updateSliderStyle(this, '#5b8cff');
                     });
                     modalBasicSlider._listener = true;
                 }
@@ -1235,7 +1552,9 @@
                     const val = parseFloat(this.value);
                     modalBasicVal.textContent = val.toFixed(1);
                     modalScore.textContent = val.toFixed(1) + ' / 10';
-                    updateSliderStyle(this, '#3a86ff');
+                    if (val >= 9) modalScore.classList.add('gold');
+                    else modalScore.classList.remove('gold');
+                    updateSliderStyle(this, '#5b8cff');
                 });
                 modalBasicSlider._listener = true;
             }
@@ -1282,7 +1601,7 @@
         });
 
         // ---------- КНОПКА "ФИЛЬМЫ С ТАКОЙ ОЦЕНКОЙ" ----------
-        document.getElementById('similar-btn').addEventListener('click', function() {
+        document.querySelector('.similar-btn').addEventListener('click', function() {
             const basicScore = parseFloat(basicSlider.value);
             const rounded = Math.round(basicScore);
             if (rounded < 1 || rounded > 10) {
@@ -1298,7 +1617,7 @@
             }
         });
 
-        // ---------- МОДАЛЬНОЕ ОКНО КРИТЕРИЕВ ----------
+        // ---------- КРИТЕРИИ ----------
         const criteriaModal = document.getElementById('criteria-modal');
         const criteriaClose = document.getElementById('criteria-close-btn');
         const criteriaBtn = document.getElementById('criteria-btn');
@@ -1316,7 +1635,7 @@
             if (e.target === criteriaModal) criteriaModal.classList.remove('active');
         });
 
-        // ---------- НИЖНЕЕ МЕНЮ ----------
+        // ---------- НАВИГАЦИЯ ----------
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -1335,9 +1654,9 @@
             await renderCollection();
             modeBasicBtn.click();
             document.querySelectorAll('input[type="range"]').forEach(sl => {
-                let color = '#3a86ff';
+                let color = '#5b8cff';
                 if (sl.id.includes('visual') || sl.id.includes('sound') || sl.id.includes('relevance')) {
-                    color = '#8338ec';
+                    color = '#a855f7';
                 }
                 updateSliderStyle(sl, color);
             });
