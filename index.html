@@ -53,11 +53,11 @@
             gap: 14px;
             padding: 12px;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch; /* Плавный скролл iOS */
-            overscroll-behavior-y: contain;   /* Предотвращает дерганье экрана */
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
             flex: 1;
             min-height: 0;
-            padding-bottom: 120px;            /* Место снизу под меню */
+            padding-bottom: 120px;
             position: relative;
             z-index: 1;
         }
@@ -228,7 +228,7 @@
             background: rgba(255,255,255,0.08);
             outline: none;
             transition: background 0.2s;
-            touch-action: pan-x; /* Фикс прыжков: свайп пальца по ползунку только по горизонтали */
+            touch-action: pan-x;
         }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
@@ -973,7 +973,7 @@
             <div class="modal-actions">
                 <button class="action-btn edit-btn" id="modal-edit-btn">✏️ Изменить</button>
                 <button class="action-btn save-edit-btn" id="modal-save-edit-btn" style="display:none;">💾 Сохранить</button>
-                <button class="action-btn kp-link-btn" id="modal-kp-btn">🎬 Кинопоиск</button>
+                <button class="action-btn kp-link-btn" id="modal-kp-btn">🎬 Страница на TMDb</button>
             </div>
         </div>
     </div>
@@ -1013,7 +1013,7 @@
 
     <script>
         /* ==========================================================
-           ЛОГИКА С API poiskkino.dev
+           ЛОГИКА С API TMDb
            ========================================================== */
         const tg = window.Telegram.WebApp;
         tg.ready();
@@ -1025,46 +1025,57 @@
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ---------- API КИНОПОИСКА ----------
-        const KP_API_KEY = 'E3VHSV6-8BXMYKN-HKQQEAV-4376JM9';
+        // ---------- API TMDb ----------
+        const TMDB_API_KEY = '82c00a88e84bebb0afa54621dee4befc';
+        const TMDB_BASE = 'https://api.themoviedb.org/3';
+        const IMG_BASE = 'https://image.tmdb.org/t/p';
 
-        async function searchKinopoisk(query) {
-            const url = `https://api.poiskkino.dev/v1.4/movie/search?page=1&limit=10&query=${encodeURIComponent(query)}`;
-            const resp = await fetch(url, {
-                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
-            });
+        // Поиск фильмов
+        async function searchTMDB(query) {
+            const url = `${TMDB_BASE}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=ru-RU`;
+            const resp = await fetch(url);
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const data = await resp.json();
-            return data.docs.map(f => ({
+            return data.results.map(f => ({
                 id: f.id,
-                title: f.name || f.alternativeName || 'Без названия',
-                year: f.year ? String(f.year) : 'Неизвестно',
-                image: f.poster?.url || f.poster?.previewUrl || '',
-                rating: f.rating?.kp || 0,
+                title: f.title || f.original_title || 'Без названия',
+                year: f.release_date ? f.release_date.slice(0, 4) : 'Неизвестно',
+                image: f.poster_path ? `${IMG_BASE}/w92${f.poster_path}` : '',
+                rating: f.vote_average || 0,
+                overview: f.overview || '',
+                genre_ids: f.genre_ids || [],
             }));
         }
 
-        async function getFilmDetails(filmId) {
-            const url = `https://api.poiskkino.dev/v1.4/movie/${filmId}`;
-            const resp = await fetch(url, {
-                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
-            });
+        // Получение деталей фильма
+        async function getFilmDetailsTMDB(filmId) {
+            const url = `${TMDB_BASE}/movie/${filmId}?api_key=${TMDB_API_KEY}&language=ru-RU`;
+            const resp = await fetch(url);
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const data = await resp.json();
 
-            const genres = data.genres || [];
-            const isCartoon = genres.some(g => g.name.includes('мультфильм') || g.name.includes('анимация'));
+            // Жанры
+            const genres = data.genres ? data.genres.map(g => g.name).join(', ') : '—';
+            // Определяем мультфильм по жанрам (анимация)
+            const isCartoon = data.genres ? data.genres.some(g => 
+                g.name.toLowerCase().includes('мультфильм') || 
+                g.name.toLowerCase().includes('анимация') ||
+                g.name.toLowerCase().includes('family') // семейный часто ассоциируется с мультфильмами
+            ) : false;
+
+            // Страны
             let country = 'Неизвестно';
-            if (data.countries && data.countries.length > 0) {
-                country = data.countries.map(c => c.name).join(', ');
+            if (data.production_countries && data.production_countries.length > 0) {
+                country = data.production_countries.map(c => c.name).join(', ');
             }
 
             return {
-                genres: genres.map(g => g.name).join(', '),
+                genres: genres,
                 isCartoon: isCartoon,
-                year: data.year ? String(data.year) : 'Неизвестно',
-                poster: data.poster?.url || data.poster?.previewUrl || '',
+                year: data.release_date ? data.release_date.slice(0, 4) : 'Неизвестно',
+                poster: data.poster_path ? `${IMG_BASE}/w342${data.poster_path}` : '',
                 country: country,
+                overview: data.overview || '',
             };
         }
 
@@ -1356,14 +1367,14 @@
 
         async function performSearch(query) {
             try {
-                const films = await searchKinopoisk(query);
+                const films = await searchTMDB(query);
                 if (films.length === 0) {
                     searchResults.innerHTML = '<div class="search-msg">Ничего не найдено</div>';
                     return;
                 }
                 const enriched = await Promise.all(films.map(async f => {
                     try {
-                        const details = await getFilmDetails(f.id);
+                        const details = await getFilmDetailsTMDB(f.id);
                         return { ...f, ...details };
                     } catch { return { ...f, genres: 'Неизвестно', isCartoon: false, country: 'Неизвестно' }; }
                 }));
@@ -1556,7 +1567,6 @@
             });
         });
 
-        // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Отрисовывает коллекцию в переданный контейнер targetList
         async function renderCollection(userId = USER_ID, targetList = collectionList) {
             const query = collectionSearch ? collectionSearch.value.toLowerCase() : '';
             const sortMethod = collectionSort ? collectionSort.value : 'newest';
@@ -1647,7 +1657,6 @@
             });
         }
 
-        // ИСПРАВЛЕННАЯ ФУНКЦИЯ ПОКАЗА КОЛЛЕКЦИИ ПОЛЬЗОВАТЕЛЯ
         function showUserCollection(userId) {
             currentViewUserId = userId;
             isUserListVisible = false;
@@ -1667,11 +1676,9 @@
                 if (el) el.textContent = nickname || 'Аноним';
             })();
 
-            // Сбрасываем фильтры
             currentScoreFilter = 'all';
             currentStatusFilter = 'all';
 
-            // Выводим фильмы выбранного пользователя во вкладке "Пользователи" (в блок userList)
             renderCollection(userId, userList);
         }
 
@@ -1793,8 +1800,9 @@
             modalType.className = 'badge' + (item.type === 'cartoon' ? ' badge-cartoon' : '');
             modalCountry.textContent = `🌍 ${item.country || 'Неизвестно'}`;
 
+            // Ссылка на TMDb
             modalKpBtn.onclick = function() {
-                tg.openLink(`https://www.kinopoisk.ru/film/${item.id}/`);
+                tg.openLink(`https://www.themoviedb.org/movie/${item.id}`);
             };
 
             const basicScore = item.basicScore || 0;
