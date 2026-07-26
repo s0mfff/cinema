@@ -33,8 +33,10 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            overflow: hidden; /* ← ВАЖНО: ограничиваем область видимости */
+            height: 100dvh;
+            overflow: hidden;
             user-select: none;
+            touch-action: manipulation;
         }
         body::before {
             content: '';
@@ -50,15 +52,17 @@
             flex-direction: column;
             gap: 14px;
             padding: 12px;
-            overflow-y: auto;   /* ← скролл внутри вкладки */
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* Плавный скролл iOS */
+            overscroll-behavior-y: contain;   /* Предотвращает дерганье экрана */
             flex: 1;
-            min-height: 0;      /* ← позволяет скроллить при переполнении */
-            padding-bottom: 80px;
+            min-height: 0;
+            padding-bottom: 120px;            /* Место снизу под меню */
             position: relative;
             z-index: 1;
         }
         .tab-content.active { display: flex; }
-        /* остальные стили без изменений (они уже были) */
+        
         .glass {
             background: var(--glass-bg);
             border: 1px solid var(--card-border);
@@ -97,6 +101,7 @@
             z-index: 10;
             display: none;
             box-shadow: var(--shadow);
+            -webkit-overflow-scrolling: touch;
         }
         .search-item {
             padding: 12px 16px;
@@ -223,6 +228,7 @@
             background: rgba(255,255,255,0.08);
             outline: none;
             transition: background 0.2s;
+            touch-action: pan-x; /* Фикс прыжков: свайп пальца по ползунку только по горизонтали */
         }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
@@ -299,15 +305,9 @@
             border: 1px solid rgba(255,255,255,0.06);
         }
 
-        #tab-collection {
-            overflow: hidden;
+        #tab-collection, #tab-users {
+            overflow-y: auto;
             gap: 10px;
-            padding-bottom: 80px;
-        }
-        #tab-users {
-            overflow: hidden;
-            gap: 10px;
-            padding-bottom: 80px;
         }
         #collection-filters, #user-filters {
             flex-shrink: 0;
@@ -317,7 +317,6 @@
         }
         #collection-list-wrapper, #user-list-wrapper {
             flex: 1;
-            overflow-y: auto;
             padding-bottom: 10px;
         }
         .collection-controls { display: flex; gap: 8px; flex-direction: column; }
@@ -540,6 +539,7 @@
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             padding: 20px;
             position: relative;
             box-shadow: var(--shadow);
@@ -569,6 +569,7 @@
             justify-content: center;
             margin-bottom: 8px;
             transition: 0.2s;
+            z-index: 5;
         }
         .modal-close:hover { background: rgba(255,255,255,0.1); }
         .modal-release-header {
@@ -742,7 +743,7 @@
             .history-item-score { font-size: 1rem; }
             .action-btn { padding: 8px 12px; font-size: 0.8rem; }
             .sliders-group { padding: 12px; }
-            .tab-content { padding: 10px; }
+            .tab-content { padding: 10px; padding-bottom: 120px; }
             .release-title { font-size: 1rem; }
         }
     </style>
@@ -1012,7 +1013,7 @@
 
     <script>
         /* ==========================================================
-           ЛОГИКА С API poiskkino.dev (исправленная)
+           ЛОГИКА С API poiskkino.dev
            ========================================================== */
         const tg = window.Telegram.WebApp;
         tg.ready();
@@ -1555,9 +1556,10 @@
             });
         });
 
-        async function renderCollection(userId = USER_ID) {
-            const query = collectionSearch.value.toLowerCase();
-            const sortMethod = collectionSort.value;
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Отрисовывает коллекцию в переданный контейнер targetList
+        async function renderCollection(userId = USER_ID, targetList = collectionList) {
+            const query = collectionSearch ? collectionSearch.value.toLowerCase() : '';
+            const sortMethod = collectionSort ? collectionSort.value : 'newest';
 
             let data = await loadUserMovies(userId);
 
@@ -1578,9 +1580,9 @@
             else if (sortMethod === 'lowest') data.sort((a, b) => a.basicScore - b.basicScore);
             else data.sort((a, b) => b.id - a.id);
 
-            collectionList.innerHTML = '';
+            targetList.innerHTML = '';
             if (data.length === 0) {
-                collectionList.innerHTML = `<div class="empty-text">📭 У этого пользователя пока нет фильмов</div>`;
+                targetList.innerHTML = `<div class="empty-text">📭 У этого пользователя пока нет фильмов</div>`;
                 return;
             }
 
@@ -1606,7 +1608,7 @@
                 div.addEventListener('click', () => {
                     openModal(item.id, userId);
                 });
-                collectionList.appendChild(div);
+                targetList.appendChild(div);
             });
         }
 
@@ -1665,15 +1667,12 @@
                 if (el) el.textContent = nickname || 'Аноним';
             })();
 
-            // Сбрасываем фильтры на "Все" и обновляем активные кнопки
+            // Сбрасываем фильтры
             currentScoreFilter = 'all';
             currentStatusFilter = 'all';
-            document.querySelectorAll('#scoreFilterScroll .filter-btn, #statusFilterScroll .filter-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('#scoreFilterScroll .filter-btn[data-score="all"]')?.classList.add('active');
-            document.querySelector('#statusFilterScroll .filter-btn[data-status="all"]')?.classList.add('active');
 
-            // Отрисовываем коллекцию переданного пользователя
-            renderCollection(userId);
+            // Выводим фильмы выбранного пользователя во вкладке "Пользователи" (в блок userList)
+            renderCollection(userId, userList);
         }
 
         function showUserList() {
@@ -1686,7 +1685,7 @@
             document.querySelectorAll('#scoreFilterScroll .filter-btn, #statusFilterScroll .filter-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('#scoreFilterScroll .filter-btn[data-score="all"]')?.classList.add('active');
             document.querySelector('#statusFilterScroll .filter-btn[data-status="all"]')?.classList.add('active');
-            renderCollection(USER_ID);
+            renderCollection(USER_ID, collectionList);
         }
 
         // ---------- МОДАЛЬНОЕ ОКНО ----------
@@ -1960,7 +1959,7 @@
                 return;
             }
             tg.showAlert('Оценка обновлена!');
-            await renderCollection(USER_ID);
+            await renderCollection(USER_ID, collectionList);
             await openModal(currentModalItemId, USER_ID);
         });
 
@@ -2009,7 +2008,7 @@
                 document.getElementById('tab-' + tab).classList.add('active');
                 if (tab === 'collection') {
                     currentViewUserId = USER_ID;
-                    renderCollection(USER_ID);
+                    renderCollection(USER_ID, collectionList);
                 } else if (tab === 'users') {
                     showUserList();
                 }
@@ -2067,7 +2066,7 @@
             currentViewUserId = USER_ID;
             currentScoreFilter = 'all';
             currentStatusFilter = 'all';
-            await renderCollection(USER_ID);
+            await renderCollection(USER_ID, collectionList);
             modeBasicBtn.click();
             document.querySelectorAll('input[type="range"]').forEach(sl => {
                 let color = '#5b8cff';
