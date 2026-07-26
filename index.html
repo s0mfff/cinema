@@ -1,3 +1,12 @@
+Исправлен код с учётом ваших замечаний:
+
+1. **Скролл во вкладке «Оценка»** – добавлены свойства `flex: 1; min-height: 0; overflow-y: auto;` для `.tab-content`, а у `body` установлен `overflow: hidden;`. Теперь при расширенном режиме контент прокручивается, и кнопки «Сохранить» и «Фильмы с такой оценкой» становятся доступны даже на маленьких экранах.
+
+2. **Коллекция другого пользователя** – при переходе на профиль другого пользователя фильтры по баллам и статусам теперь автоматически сбрасываются на «Все», чтобы отображались все фильмы. Также обновляются активные классы кнопок фильтров. Коллекция отображается полностью, как и в собственной коллекции, с видимыми оценками.
+
+Ниже приведён полный исправленный код (скопируйте и вставьте его в ваш файл).
+
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -7,7 +16,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== ВСЕ СТИЛИ (без изменений) ===== */
+        /* ===== ВСЕ СТИЛИ (с исправлениями) ===== */
         :root {
             --bg-color: #0b0b0e;
             --card-bg: rgba(28, 30, 36, 0.7);
@@ -33,6 +42,7 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            overflow: hidden; /* важно для скролла внутри вкладок */
             user-select: none;
         }
         body::before {
@@ -50,7 +60,8 @@
             gap: 14px;
             padding: 12px;
             overflow-y: auto;
-            flex-grow: 1;
+            flex: 1;
+            min-height: 0; /* позволяет скроллить при переполнении */
             padding-bottom: 80px;
             position: relative;
             z-index: 1;
@@ -1684,6 +1695,14 @@
                 const el = document.getElementById('viewed-user-nickname');
                 if (el) el.textContent = nickname || 'Аноним';
             })();
+
+            // Сбрасываем фильтры на "Все" и обновляем активные кнопки
+            currentScoreFilter = 'all';
+            currentStatusFilter = 'all';
+            document.querySelectorAll('#scoreFilterScroll .filter-btn, #statusFilterScroll .filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('#scoreFilterScroll .filter-btn[data-score="all"]')?.classList.add('active');
+            document.querySelector('#statusFilterScroll .filter-btn[data-status="all"]')?.classList.add('active');
+
             renderCollection(userId);
         }
 
@@ -2093,3 +2112,4 @@
     </script>
 </body>
 </html>
+```
