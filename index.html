@@ -35,7 +35,6 @@
             user-select: none;
             backdrop-filter: blur(2px);
         }
-        /* Подложка с текстурой */
         body::before {
             content: '';
             position: fixed;
@@ -58,7 +57,6 @@
         }
         .tab-content.active { display: flex; }
 
-        /* Стеклянные карточки */
         .glass {
             background: var(--glass-bg);
             backdrop-filter: blur(12px) saturate(1.2);
@@ -68,7 +66,6 @@
             box-shadow: var(--shadow);
         }
 
-        /* ===== ОСНОВНЫЕ ЭЛЕМЕНТЫ ===== */
         .search-container { position: relative; }
         .search-input, .collection-search {
             width: 100%;
@@ -125,7 +122,6 @@
         .search-item-artist { font-size: 0.75rem; color: var(--text-muted); }
         .search-msg { padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
 
-        /* Карточка выбранного фильма */
         .selected-release-card {
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
@@ -167,7 +163,6 @@
         }
         .badge-cartoon { background: rgba(155, 143, 230, 0.2); color: #b8aaff; border-color: #9b8fe6; }
 
-        /* Слайдеры */
         .sliders-group {
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
@@ -332,14 +327,46 @@
             padding-right: 36px;
         }
 
+        /* Контейнер для фильтров с кнопками прокрутки */
+        .filter-scroll-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        .filter-scroll-wrapper .scroll-btn {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #aaa;
+            font-size: 14px;
+            cursor: pointer;
+            display: none; /* по умолчанию скрыты, показываем на десктопе */
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            backdrop-filter: blur(4px);
+            user-select: none;
+            z-index: 2;
+        }
+        .filter-scroll-wrapper .scroll-btn:hover { background: rgba(255,255,255,0.12); }
+        .filter-scroll-wrapper .scroll-btn:active { transform: scale(0.9); }
+
         .score-filter-scroll {
             display: flex;
             gap: 6px;
             overflow-x: auto;
             padding: 6px 0 4px 0;
             scrollbar-width: none;
+            flex: 1;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
         }
         .score-filter-scroll::-webkit-scrollbar { display: none; }
+
         .score-filter-scroll .filter-btn {
             flex-shrink: 0;
             padding: 6px 16px;
@@ -360,6 +387,11 @@
             box-shadow: 0 0 20px rgba(91, 140, 255, 0.1);
         }
         .score-filter-scroll .filter-btn:active { transform: scale(0.92); }
+
+        /* Показываем кнопки только на экранах шире 600px */
+        @media (min-width: 600px) {
+            .filter-scroll-wrapper .scroll-btn { display: flex; }
+        }
 
         .history-list { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 20px 0; }
         .history-item {
@@ -417,7 +449,6 @@
             color: var(--text-muted);
         }
 
-        /* Цветные фоны */
         .history-item.rank-neutral { border-left: 4px solid #555; }
         .history-item.rank-silver { border-left: 4px solid #c9c9c9; background: rgba(201,201,201,0.05); }
         .history-item.rank-gold   { border-left: 4px solid #fbbf24; background: rgba(251,191,36,0.06); }
@@ -428,7 +459,6 @@
 
         .empty-text { color: var(--text-muted); text-align: center; margin-top: 30px; font-size: 0.95rem; opacity: 0.6; }
 
-        /* Нижнее меню */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -481,7 +511,6 @@
         }
         .mode-btn:disabled { opacity: 0.4; pointer-events: none; }
 
-        /* Модальное окно */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -603,7 +632,6 @@
         }
         .criteria-content .purple-title { color: var(--purple-accent); }
 
-        /* Адаптив */
         @media (max-width: 420px) {
             .score-display { font-size: 3rem; }
             .modal-score { font-size: 2.8rem; }
@@ -631,7 +659,6 @@
                 <div class="release-meta">
                     <span id="release-type" class="badge">Фильм</span>
                     <span id="release-country" class="badge">🌍 Страна</span>
-                    <span id="release-director" class="badge">🎬 Режиссёр</span>
                 </div>
             </div>
         </div>
@@ -715,27 +742,38 @@
                     <option value="lowest">Сначала низкие баллы</option>
                 </select>
             </div>
-            <div class="score-filter-scroll" id="scoreFilterScroll">
-                <button class="filter-btn active" data-score="all">Все</button>
-                <button class="filter-btn" data-score="1">1</button>
-                <button class="filter-btn" data-score="2">2</button>
-                <button class="filter-btn" data-score="3">3</button>
-                <button class="filter-btn" data-score="4">4</button>
-                <button class="filter-btn" data-score="5">5</button>
-                <button class="filter-btn" data-score="6">6</button>
-                <button class="filter-btn" data-score="7">7</button>
-                <button class="filter-btn" data-score="8">8</button>
-                <button class="filter-btn" data-score="9">9</button>
-                <button class="filter-btn" data-score="10">10</button>
+            <!-- Фильтр по баллам с кнопками прокрутки -->
+            <div class="filter-scroll-wrapper" id="scoreFilterWrapper">
+                <button class="scroll-btn" id="scrollLeftScore">◀</button>
+                <div class="score-filter-scroll" id="scoreFilterScroll">
+                    <button class="filter-btn active" data-score="all">Все</button>
+                    <button class="filter-btn" data-score="1">1</button>
+                    <button class="filter-btn" data-score="2">2</button>
+                    <button class="filter-btn" data-score="3">3</button>
+                    <button class="filter-btn" data-score="4">4</button>
+                    <button class="filter-btn" data-score="5">5</button>
+                    <button class="filter-btn" data-score="6">6</button>
+                    <button class="filter-btn" data-score="7">7</button>
+                    <button class="filter-btn" data-score="8">8</button>
+                    <button class="filter-btn" data-score="9">9</button>
+                    <button class="filter-btn" data-score="10">10</button>
+                </div>
+                <button class="scroll-btn" id="scrollRightScore">▶</button>
             </div>
-            <div class="score-filter-scroll" id="statusFilterScroll">
-                <button class="filter-btn active" data-status="all">Все</button>
-                <button class="filter-btn" data-status="Серебряный">🥈 Серебряный</button>
-                <button class="filter-btn" data-status="Золотой">🥇 Золотой</button>
-                <button class="filter-btn" data-status="Изумрудный">💎 Изумрудный</button>
-                <button class="filter-btn" data-status="Сапфировый">🔷 Сапфировый</button>
-                <button class="filter-btn" data-status="Рубиновый">🔴 Рубиновый</button>
-                <button class="filter-btn" data-status="Мультфильмы">🎨 Мультфильмы</button>
+
+            <!-- Фильтр по статусам с кнопками прокрутки -->
+            <div class="filter-scroll-wrapper" id="statusFilterWrapper">
+                <button class="scroll-btn" id="scrollLeftStatus">◀</button>
+                <div class="score-filter-scroll" id="statusFilterScroll">
+                    <button class="filter-btn active" data-status="all">Все</button>
+                    <button class="filter-btn" data-status="Серебряный">🥈 Серебряный</button>
+                    <button class="filter-btn" data-status="Золотой">🥇 Золотой</button>
+                    <button class="filter-btn" data-status="Изумрудный">💎 Изумрудный</button>
+                    <button class="filter-btn" data-status="Сапфировый">🔷 Сапфировый</button>
+                    <button class="filter-btn" data-status="Рубиновый">🔴 Рубиновый</button>
+                    <button class="filter-btn" data-status="Мультфильмы">🎨 Мультфильмы</button>
+                </div>
+                <button class="scroll-btn" id="scrollRightStatus">▶</button>
             </div>
         </div>
         <div id="collection-list-wrapper">
@@ -761,7 +799,6 @@
                     <div class="meta">
                         <span id="modal-type" class="badge">Фильм</span>
                         <span id="modal-country" class="badge">🌍 Страна</span>
-                        <span id="modal-director" class="badge">🎬 Режиссёр</span>
                     </div>
                 </div>
             </div>
@@ -913,18 +950,9 @@
             const data = await resp.json();
             const genres = data.genres || [];
             const isCartoon = genres.some(g => g.genre.includes('мультфильм') || g.genre.includes('анимация'));
-            // Страна
             let country = 'Неизвестно';
             if (data.countries && data.countries.length > 0) {
                 country = data.countries.map(c => c.country).join(', ');
-            }
-            // Режиссёр
-            let director = 'Неизвестно';
-            if (data.persons) {
-                const dirs = data.persons.filter(p => p.professionKey === 'DIRECTOR');
-                if (dirs.length > 0) {
-                    director = dirs.map(d => d.nameRu || d.nameEn || d.nameOriginal).join(', ');
-                }
             }
             return {
                 genres: genres.map(g => g.genre).join(', '),
@@ -932,7 +960,6 @@
                 year: data.year || 'Неизвестно',
                 poster: data.posterUrl || '',
                 country: country,
-                director: director,
             };
         }
 
@@ -951,7 +978,6 @@
         const releaseArtist = document.getElementById('release-artist');
         const releaseType = document.getElementById('release-type');
         const releaseCountry = document.getElementById('release-country');
-        const releaseDirector = document.getElementById('release-director');
 
         const modeBasicBtn = document.getElementById('mode-basic');
         const modeExtendedBtn = document.getElementById('mode-extended');
@@ -1129,7 +1155,7 @@
                     try {
                         const details = await getFilmDetails(f.id);
                         return { ...f, ...details };
-                    } catch { return { ...f, genres: 'Неизвестно', isCartoon: false, country: 'Неизвестно', director: 'Неизвестно' }; }
+                    } catch { return { ...f, genres: 'Неизвестно', isCartoon: false, country: 'Неизвестно' }; }
                 }));
                 searchResults.innerHTML = enriched.map(f => `
                     <div class="search-item" data-id="${f.id}">
@@ -1137,9 +1163,8 @@
                         <div class="search-item-info">
                             <div class="search-item-title">${f.title}</div>
                             <div class="search-item-artist">${f.year} · ${f.genres || '—'}</div>
-                            <div style="font-size:0.7rem; color:var(--text-muted); display:flex; gap:6px; flex-wrap:wrap;">
-                                <span>🌍 ${f.country}</span>
-                                <span>🎬 ${f.director}</span>
+                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">
+                                🌍 ${f.country}
                             </div>
                         </div>
                         <span class="badge ${f.isCartoon ? 'badge-cartoon' : ''}">${f.isCartoon ? '🎨 Мульт' : '🎬 Фильм'}</span>
@@ -1168,7 +1193,6 @@
             releaseType.textContent = film.isCartoon ? 'Мультфильм' : 'Фильм';
             releaseType.className = 'badge' + (film.isCartoon ? ' badge-cartoon' : '');
             releaseCountry.textContent = `🌍 ${film.country || 'Неизвестно'}`;
-            releaseDirector.textContent = `🎬 ${film.director || 'Неизвестно'}`;
 
             if (film.isCartoon) {
                 modeBasicBtn.click();
@@ -1235,7 +1259,6 @@
                 sliders: slidersData,
                 extRank: extRank,
                 country: selectedFilm.country || 'Неизвестно',
-                director: selectedFilm.director || 'Неизвестно',
                 genres: selectedFilm.genres || '—',
             };
 
@@ -1256,12 +1279,64 @@
         const filterButtons = document.querySelectorAll('#scoreFilterScroll .filter-btn');
         const statusFilterButtons = document.querySelectorAll('#statusFilterScroll .filter-btn');
 
+        // ---- Прокрутка фильтров с кнопками ----
+        function setupScrollButtons(wrapperId, scrollContainerId, leftBtnId, rightBtnId) {
+            const wrapper = document.getElementById(wrapperId);
+            const container = document.getElementById(scrollContainerId);
+            const leftBtn = document.getElementById(leftBtnId);
+            const rightBtn = document.getElementById(rightBtnId);
+            if (!wrapper || !container || !leftBtn || !rightBtn) return;
+
+            const step = () => {
+                // ширина видимой области минус отступы
+                return container.clientWidth * 0.8;
+            };
+
+            leftBtn.addEventListener('click', () => {
+                container.scrollBy({ left: -step(), behavior: 'smooth' });
+            });
+            rightBtn.addEventListener('click', () => {
+                container.scrollBy({ left: step(), behavior: 'smooth' });
+            });
+
+            // Прокрутка колёсиком мыши
+            container.addEventListener('wheel', (e) => {
+                if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+                    // если вертикальная прокрутка – игнорируем
+                    return;
+                }
+                e.preventDefault();
+                container.scrollBy({ left: e.deltaX, behavior: 'smooth' });
+            }, { passive: false });
+
+            // Автоматически показывать/скрывать кнопки в зависимости от возможности прокрутки
+            function updateButtonsVisibility() {
+                const maxScroll = container.scrollWidth - container.clientWidth;
+                leftBtn.style.display = container.scrollLeft > 0 ? 'flex' : 'none';
+                rightBtn.style.display = container.scrollLeft < maxScroll - 1 ? 'flex' : 'none';
+            }
+            container.addEventListener('scroll', updateButtonsVisibility);
+            window.addEventListener('resize', updateButtonsVisibility);
+            // Инициализация
+            setTimeout(updateButtonsVisibility, 100);
+        }
+
+        setupScrollButtons('scoreFilterWrapper', 'scoreFilterScroll', 'scrollLeftScore', 'scrollRightScore');
+        setupScrollButtons('statusFilterWrapper', 'statusFilterScroll', 'scrollLeftStatus', 'scrollRightStatus');
+
+        // ---- Фильтры ----
         filterButtons.forEach(btn => {
             btn.addEventListener('click', function() {
                 filterButtons.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentScoreFilter = this.dataset.score;
                 renderCollection();
+                // прокручиваем контейнер, чтобы активная кнопка была видна
+                const container = document.getElementById('scoreFilterScroll');
+                const btnRect = this.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                const scrollLeft = container.scrollLeft + (btnRect.left - containerRect.left) - containerRect.width / 2 + btnRect.width / 2;
+                container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
             });
         });
 
@@ -1271,6 +1346,11 @@
                 this.classList.add('active');
                 currentStatusFilter = this.dataset.status;
                 renderCollection();
+                const container = document.getElementById('statusFilterScroll');
+                const btnRect = this.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                const scrollLeft = container.scrollLeft + (btnRect.left - containerRect.left) - containerRect.width / 2 + btnRect.width / 2;
+                container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
             });
         });
 
@@ -1327,7 +1407,6 @@
                         <div class="history-item-artist">${item.year || 'н/д'} · ${item.type === 'cartoon' ? 'Мультфильм' : 'Фильм'}</div>
                         <div class="history-item-meta">
                             <span>🌍 ${item.country || 'Неизвестно'}</span>
-                            <span>🎬 ${item.director || 'Неизвестно'}</span>
                         </div>
                     </div>
                     <div class="history-item-right">
@@ -1359,7 +1438,6 @@
         const modalContent = document.getElementById('modal-content');
         const modalType = document.getElementById('modal-type');
         const modalCountry = document.getElementById('modal-country');
-        const modalDirector = document.getElementById('modal-director');
 
         let currentModalItemId = null;
         let isEditMode = false;
@@ -1447,7 +1525,6 @@
             modalType.textContent = item.type === 'cartoon' ? 'Мультфильм' : 'Фильм';
             modalType.className = 'badge' + (item.type === 'cartoon' ? ' badge-cartoon' : '');
             modalCountry.textContent = `🌍 ${item.country || 'Неизвестно'}`;
-            modalDirector.textContent = `🎬 ${item.director || 'Неизвестно'}`;
 
             modalKpBtn.onclick = function() {
                 tg.openLink(`https://www.kinopoisk.ru/film/${item.id}/`);
