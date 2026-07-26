@@ -7,7 +7,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== ВСЕ СТИЛИ (с исправлениями) ===== */
+        /* ===== ВСЕ СТИЛИ ===== */
         :root {
             --bg-color: #0b0b0e;
             --card-bg: rgba(28, 30, 36, 0.7);
@@ -33,7 +33,7 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            overflow: hidden; /* важно для скролла внутри вкладок */
+            overflow: hidden; /* ← ВАЖНО: ограничиваем область видимости */
             user-select: none;
         }
         body::before {
@@ -50,14 +50,15 @@
             flex-direction: column;
             gap: 14px;
             padding: 12px;
-            overflow-y: auto;
+            overflow-y: auto;   /* ← скролл внутри вкладки */
             flex: 1;
-            min-height: 0; /* позволяет скроллить при переполнении */
+            min-height: 0;      /* ← позволяет скроллить при переполнении */
             padding-bottom: 80px;
             position: relative;
             z-index: 1;
         }
         .tab-content.active { display: flex; }
+        /* остальные стили без изменений (они уже были) */
         .glass {
             background: var(--glass-bg);
             border: 1px solid var(--card-border);
@@ -639,7 +640,6 @@
         }
         .criteria-content .purple-title { color: var(--purple-accent); }
 
-        /* Дополнительные стили для модалки ника */
         .nickname-modal .modal-content {
             max-width: 400px;
             text-align: center;
@@ -1012,7 +1012,7 @@
 
     <script>
         /* ==========================================================
-           НОВАЯ ЛОГИКА С API poiskkino.dev
+           ЛОГИКА С API poiskkino.dev (исправленная)
            ========================================================== */
         const tg = window.Telegram.WebApp;
         tg.ready();
@@ -1024,8 +1024,8 @@
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ---------- НОВЫЙ API КИНОПОИСКА (poiskkino.dev) ----------
-        const KP_API_KEY = 'E3VHSV6-8BXMYKN-HKQQEAV-4376JM9'; // ваш новый токен
+        // ---------- API КИНОПОИСКА ----------
+        const KP_API_KEY = 'E3VHSV6-8BXMYKN-HKQQEAV-4376JM9';
 
         async function searchKinopoisk(query) {
             const url = `https://api.poiskkino.dev/v1.4/movie/search?page=1&limit=10&query=${encodeURIComponent(query)}`;
@@ -1067,25 +1067,6 @@
             };
         }
 
-        // ---------- ХРАНИЛИЩЕ (локальное + облачное) ----------
-        const STORAGE_KEY = 'rzt_cinema_history_v2';
-
-        function cloudGet(key) {
-            return new Promise((resolve) => {
-                tg.CloudStorage.getItem(key, (err, value) => {
-                    if (err) resolve(null);
-                    else resolve(value);
-                });
-            });
-        }
-        function cloudSet(key, value) {
-            return new Promise((resolve) => {
-                tg.CloudStorage.setItem(key, value, (err) => {
-                    resolve(!err);
-                });
-            });
-        }
-
         // ---------- ПОЛЬЗОВАТЕЛИ ----------
         const user = tg.initDataUnsafe?.user;
         const USER_ID = user ? user.id : 0;
@@ -1106,7 +1087,6 @@
         }
 
         async function setUserNickname(userId, nickname) {
-            // Проверка на занятость ника
             const { data, error } = await supabaseClient
                 .from('users')
                 .select('user_id')
@@ -1120,7 +1100,6 @@
                 return { success: false, error: 'Занят' };
             }
 
-            // Вставка или обновление
             const { error: upsertError } = await supabaseClient
                 .from('users')
                 .upsert({ user_id: userId, nickname: nickname }, { onConflict: 'user_id' });
@@ -1222,7 +1201,7 @@
         let currentScoreFilter = 'all';
         let currentStatusFilter = 'all';
 
-        // DOM-элементы (получены ниже)
+        // DOM-элементы
         const searchInput = document.getElementById('search-input');
         const searchResults = document.getElementById('search-results');
         const selectedRelease = document.getElementById('selected-release');
@@ -1356,7 +1335,7 @@
             sl.addEventListener('input', updateScoreDisplay);
         });
 
-        // ---------- ПОИСК (через новый API) ----------
+        // ---------- ПОИСК ----------
         let searchTimeout = null;
         searchInput.addEventListener('input', () => {
             clearTimeout(searchTimeout);
@@ -1438,7 +1417,7 @@
             updateScoreDisplay();
         }
 
-        // ---------- СОХРАНЕНИЕ ОЦЕНКИ (только свои) ----------
+        // ---------- СОХРАНЕНИЕ ОЦЕНКИ ----------
         document.getElementById('save-btn').addEventListener('click', async () => {
             if (!selectedFilm) {
                 tg.showAlert('Сначала найдите и выберите фильм');
@@ -1476,7 +1455,6 @@
                 extRank = null;
             }
 
-            // Проверяем, есть ли уже фильм у пользователя
             const { data: existing, error: existErr } = await supabaseClient
                 .from('user_movies')
                 .select('movie_id')
@@ -1515,7 +1493,7 @@
             renderCollection(USER_ID);
         });
 
-        // ---------- КОЛЛЕКЦИЯ (универсальная) ----------
+        // ---------- КОЛЛЕКЦИЯ ----------
         const collectionSearch = document.getElementById('collection-search');
         const collectionSort = document.getElementById('collection-sort');
         const collectionList = document.getElementById('collection-list');
@@ -1606,7 +1584,6 @@
                 return;
             }
 
-            const isOwn = (userId === USER_ID);
             data.forEach(item => {
                 const scoreStr = item.basicScore.toFixed(1) + '/10';
                 const rankClass = getRankClass(item);
@@ -1668,6 +1645,7 @@
             });
         }
 
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ ПОКАЗА КОЛЛЕКЦИИ ПОЛЬЗОВАТЕЛЯ
         function showUserCollection(userId) {
             currentViewUserId = userId;
             isUserListVisible = false;
@@ -1694,6 +1672,7 @@
             document.querySelector('#scoreFilterScroll .filter-btn[data-score="all"]')?.classList.add('active');
             document.querySelector('#statusFilterScroll .filter-btn[data-status="all"]')?.classList.add('active');
 
+            // Отрисовываем коллекцию переданного пользователя
             renderCollection(userId);
         }
 
