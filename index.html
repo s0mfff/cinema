@@ -19,7 +19,6 @@
             --border-color: rgba(255, 255, 255, 0.06);
             --red-accent: #f87171;
             --cartoon-color: #9b8fe6;
-            /* Сделали фон чуть плотнее, так как убрали глючный blur */
             --glass-bg: rgba(28, 30, 36, 0.85); 
             --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
@@ -34,7 +33,6 @@
             flex-direction: column;
             height: 100vh;
             user-select: none;
-            /* Убрали backdrop-filter с body, он тут не нужен и тормозит */
         }
         body::before {
             content: '';
@@ -52,7 +50,7 @@
             padding: 12px;
             overflow-y: auto;
             flex-grow: 1;
-            padding-bottom: 80px;
+            padding-bottom: 110px; /* Увеличили отступ, чтобы меню ничего не перекрывало */
             position: relative;
             z-index: 1;
         }
@@ -239,7 +237,7 @@
             align-items: stretch;
             gap: 16px;
             padding-top: 12px;
-            margin-top: auto;
+            /* Убрали margin-top: auto, чтобы блок не улетал вниз под меню */
         }
         .score-display {
             font-size: 3.5rem;
@@ -252,7 +250,6 @@
         }
         .score-display.gold {
             color: var(--gold) !important;
-            /* Уменьшили тень, чтобы не было огромного засвета */
             text-shadow: 0 0 20px rgba(251, 191, 36, 0.4) !important; 
         }
         .score-display .slash {
@@ -302,7 +299,7 @@
         #tab-collection {
             overflow: hidden;
             gap: 10px;
-            padding-bottom: 80px;
+            padding-bottom: 110px;
         }
         #collection-filters {
             flex-shrink: 0;
@@ -521,7 +518,7 @@
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(5px); /* Оставили легкий блюр только для фона модалки */
+            backdrop-filter: blur(5px);
             z-index: 200;
             justify-content: center;
             align-items: center;
@@ -539,7 +536,6 @@
             position: relative;
             box-shadow: var(--shadow);
         }
-        /* Сделали фоны модалки более плотными */
         .modal-content.rank-neutral { background: rgba(30,30,40,0.95); }
         .modal-content.rank-silver { background: rgba(40,40,50,0.95); }
         .modal-content.rank-gold   { background: rgba(60,50,20,0.95); }
@@ -605,7 +601,7 @@
         }
         .modal-score.gold {
             color: var(--gold) !important;
-            text-shadow: 0 0 20px rgba(251, 191, 36, 0.3) !important; /* Уменьшили тень */
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.3) !important;
         }
         .modal-actions {
             display: flex;
