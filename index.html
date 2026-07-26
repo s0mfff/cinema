@@ -6,7 +6,7 @@
     <title>Оценка фильма</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* ===== ОСНОВНЫЕ СТИЛИ (без изменений) ===== */
+        /* ===== ОСНОВНЫЕ СТИЛИ ===== */
         :root {
             --bg-color: #111113;
             --card-bg: #1d1e22;
@@ -17,6 +17,7 @@
             --gold: #FFD700;
             --border-color: #2c2d31;
             --red-accent: #ff4757;
+            --cartoon-color: #9b8fe6;
         }
         * { box-sizing: border-box; }
         body {
@@ -177,6 +178,8 @@
         .history-item.rank-emerald{ background: rgba(31, 139, 77, 0.15); border-left: 4px solid #1f8b4d; }
         .history-item.rank-sapphire{ background: rgba(34, 125, 186, 0.15); border-left: 4px solid #227dba; }
         .history-item.rank-ruby   { background: rgba(231, 76, 60, 0.15); border-left: 4px solid #e74c3c; }
+        /* Цвет для мультфильмов */
+        .history-item.rank-cartoon { background: rgba(155, 143, 230, 0.15); border-left: 4px solid #9b8fe6; }
 
         .empty-text { color: var(--text-muted); text-align: center; margin-top: 20px; font-size: 0.9rem; }
 
@@ -188,6 +191,7 @@
         .mode-btn { flex: 1; background: #444; color: #fff; border: none; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer; }
         .mode-btn.active { background: var(--blue-accent); }
         .mode-btn:active { transform: scale(0.95); }
+        .mode-btn:disabled { opacity: 0.5; pointer-events: none; }
 
         /* ===== МОДАЛЬНОЕ ОКНО ===== */
         .modal-overlay {
@@ -218,6 +222,7 @@
         .modal-content.rank-emerald{ background: #0a3a1a; }
         .modal-content.rank-sapphire{ background: #0a2a4a; }
         .modal-content.rank-ruby   { background: #4a0a0a; }
+        .modal-content.rank-cartoon{ background: #2a234a; }
 
         .modal-close {
             position: sticky;
@@ -402,6 +407,7 @@
             </select>
         </div>
 
+        <!-- Фильтр по баллам -->
         <div class="score-filter-scroll" id="scoreFilterScroll">
             <button class="filter-btn active" data-score="all">Все</button>
             <button class="filter-btn" data-score="1">1</button>
@@ -414,6 +420,17 @@
             <button class="filter-btn" data-score="8">8</button>
             <button class="filter-btn" data-score="9">9</button>
             <button class="filter-btn" data-score="10">10</button>
+        </div>
+
+        <!-- Фильтр по статусам (рангам) + мультфильмы -->
+        <div class="score-filter-scroll" id="statusFilterScroll">
+            <button class="filter-btn active" data-status="all">Все</button>
+            <button class="filter-btn" data-status="Серебряный">🥈 Серебряный</button>
+            <button class="filter-btn" data-status="Золотой">🥇 Золотой</button>
+            <button class="filter-btn" data-status="Изумрудный">💎 Изумрудный</button>
+            <button class="filter-btn" data-status="Сапфировый">🔷 Сапфировый</button>
+            <button class="filter-btn" data-status="Рубиновый">🔴 Рубиновый</button>
+            <button class="filter-btn" data-status="Мультфильмы">🎨 Мультфильмы</button>
         </div>
 
         <div id="collection-list" class="history-list"></div>
@@ -599,6 +616,7 @@
         let selectedFilm = null;
         let currentMode = 'basic'; // 'basic' или 'extended'
         let currentScoreFilter = 'all';
+        let currentStatusFilter = 'all'; // 'all', 'Серебряный', 'Золотой', 'Изумрудный', 'Сапфировый', 'Рубиновый', 'Мультфильмы'
 
         // DOM-элементы
         const searchInput = document.getElementById('search-input');
@@ -878,6 +896,13 @@
                 slidersData = { script, acting, directing, visual, sound, relevance };
             }
 
+            // Для мультфильмов расширенная не сохраняется
+            if (selectedFilm.isCartoon) {
+                extendedScoreVal = null;
+                slidersData = null;
+                extRank = null;
+            }
+
             const item = {
                 id: selectedFilm.id,
                 title: selectedFilm.title,
@@ -904,8 +929,10 @@
         const collectionSearch = document.getElementById('collection-search');
         const collectionSort = document.getElementById('collection-sort');
         const collectionList = document.getElementById('collection-list');
-        const filterButtons = document.querySelectorAll('.filter-btn');
+        const filterButtons = document.querySelectorAll('#scoreFilterScroll .filter-btn');
+        const statusFilterButtons = document.querySelectorAll('#statusFilterScroll .filter-btn');
 
+        // Фильтр по баллам
         filterButtons.forEach(btn => {
             btn.addEventListener('click', function() {
                 filterButtons.forEach(b => b.classList.remove('active'));
@@ -915,13 +942,24 @@
             });
         });
 
-        // Определение класса фона по расширенной оценке (или нейтральный, если её нет)
-        function getRankClass(extScore) {
-            if (extScore === null || extScore === undefined) return 'rank-neutral';
-            if (extScore >= 24) return 'rank-ruby';
-            if (extScore >= 18) return 'rank-sapphire';
-            if (extScore >= 12) return 'rank-emerald';
-            if (extScore >= 6) return 'rank-gold';
+        // Фильтр по статусам
+        statusFilterButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                statusFilterButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentStatusFilter = this.dataset.status;
+                renderCollection();
+            });
+        });
+
+        // Определение класса фона: для мультфильмов – фиолетовый, иначе по рангу
+        function getRankClass(item) {
+            if (item.type === 'cartoon') return 'rank-cartoon';
+            if (item.extendedScore === null || item.extendedScore === undefined) return 'rank-neutral';
+            if (item.extendedScore >= 24) return 'rank-ruby';
+            if (item.extendedScore >= 18) return 'rank-sapphire';
+            if (item.extendedScore >= 12) return 'rank-emerald';
+            if (item.extendedScore >= 6) return 'rank-gold';
             return 'rank-silver';
         }
 
@@ -930,19 +968,29 @@
             const sortMethod = collectionSort.value;
             let data = await loadCollection();
 
+            // Фильтр по поиску
             if (query) data = data.filter(item => item.title.toLowerCase().includes(query));
 
+            // Фильтр по баллам
             if (currentScoreFilter !== 'all') {
                 const filterVal = parseFloat(currentScoreFilter);
-                data = data.filter(item => {
-                    // Фильтр по базовой оценке (всегда есть)
-                    return Math.round(item.basicScore) === filterVal;
-                });
+                data = data.filter(item => Math.round(item.basicScore) === filterVal);
             }
 
+            // Фильтр по статусам
+            if (currentStatusFilter !== 'all') {
+                if (currentStatusFilter === 'Мультфильмы') {
+                    data = data.filter(item => item.type === 'cartoon');
+                } else {
+                    // Фильтр по рангу (extRank)
+                    data = data.filter(item => item.extRank === currentStatusFilter);
+                }
+            }
+
+            // Сортировка
             if (sortMethod === 'highest') data.sort((a, b) => b.basicScore - a.basicScore);
             else if (sortMethod === 'lowest') data.sort((a, b) => a.basicScore - b.basicScore);
-            else data.sort((a, b) => b.id - a.id);
+            else data.sort((a, b) => b.id - a.id); // newest
 
             collectionList.innerHTML = '';
             if (data.length === 0) {
@@ -952,7 +1000,7 @@
             data.forEach(item => {
                 const basicScore = item.basicScore || 0;
                 const scoreDisplayStr = basicScore.toFixed(1) + '/10';
-                const rankClass = getRankClass(item.extendedScore);
+                const rankClass = getRankClass(item);
 
                 const div = document.createElement('div');
                 div.className = `history-item ${rankClass}`;
@@ -998,6 +1046,12 @@
             const btn = e.target.closest('.mode-btn');
             if (!btn) return;
             if (btn.classList.contains('active')) return;
+            // Проверяем, не мультфильм ли открыт – если мульт, то не даём переключить
+            const item = getCurrentModalItem();
+            if (item && item.type === 'cartoon') {
+                tg.showAlert('Для мультфильмов расширенная оценка недоступна');
+                return;
+            }
             modalModeToggle.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const mode = btn.dataset.modalMode;
@@ -1012,7 +1066,6 @@
             if (mode === 'basic') {
                 updateSliderStyle(modalBasicSlider, '#3a86ff');
             } else {
-                // Обновляем все расширенные слайдеры
                 const extIds = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
                 extIds.forEach(id => {
                     const sl = document.getElementById(`modal-slider-${id}`);
@@ -1021,6 +1074,13 @@
                 });
             }
         });
+
+        // Вспомогательная функция для получения текущего объекта из коллекции по id
+        async function getCurrentModalItem() {
+            if (!currentModalItemId) return null;
+            const coll = await loadCollection();
+            return coll.find(el => el.id === currentModalItemId) || null;
+        }
 
         // Обновление расширенной оценки в модалке
         function updateModalExtendedScore() {
@@ -1077,7 +1137,7 @@
             updateSliderStyle(modalBasicSlider, '#3a86ff');
 
             // Расширенная оценка (если есть)
-            const hasExtended = item.extendedScore !== null && item.extendedScore !== undefined;
+            const hasExtended = item.extendedScore !== null && item.extendedScore !== undefined && item.type !== 'cartoon';
             const sl = item.sliders || { script: 3, acting: 3, directing: 3, visual: 3, sound: 3, relevance: 3 };
             document.getElementById('modal-slider-script').value = sl.script;
             document.getElementById('modal-slider-acting').value = sl.acting;
@@ -1085,14 +1145,12 @@
             document.getElementById('modal-slider-visual').value = sl.visual;
             document.getElementById('modal-slider-sound').value = sl.sound;
             document.getElementById('modal-slider-relevance').value = sl.relevance;
-            // Обновляем отображение расширенной оценки
+
             if (hasExtended) {
                 updateModalExtendedScore();
             } else {
-                // Если расширенной нет, показываем прочерк или нейтральное сообщение
                 document.getElementById('modal-extended-score').textContent = '—';
                 document.getElementById('modal-extended-rank').textContent = 'Нет расширенной оценки';
-                // Сбрасываем стили слайдеров на нейтральные (серые)
                 const extIds = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
                 extIds.forEach(id => {
                     const sl2 = document.getElementById(`modal-slider-${id}`);
@@ -1100,25 +1158,30 @@
                 });
             }
 
-            // Активная вкладка – показываем ту, которая есть у фильма (но если есть только базовая, то по умолчанию базовая)
-            let activeMode = 'basic';
-            if (hasExtended) {
-                // Если есть расширенная, можно показать её, но по умолчанию оставим базовую
-                // Можно переключить на extended, если пользователь хочет, но мы оставим выбор за пользователем
+            // Определяем, показывать ли переключение режимов
+            const isCartoon = item.type === 'cartoon';
+            if (isCartoon) {
+                modalModeToggle.style.display = 'none';
+                // Показываем только базовую секцию
+                modalBasicSection.classList.add('active');
+                modalExtendedSection.classList.remove('active');
+                // Отключаем расширенные слайдеры (они и так disabled)
+            } else {
+                modalModeToggle.style.display = 'flex';
+                // Если расширенная есть, можно показать активную вкладку по умолчанию базовую
+                modalModeToggle.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                const targetBtn = modalModeToggle.querySelector(`[data-modal-mode="basic"]`);
+                if (targetBtn) targetBtn.classList.add('active');
+                modalBasicSection.classList.add('active');
+                modalExtendedSection.classList.remove('active');
             }
-            // По умолчанию показываем базовую вкладку
-            modalModeToggle.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            const targetBtn = modalModeToggle.querySelector(`[data-modal-mode="basic"]`);
-            if (targetBtn) targetBtn.classList.add('active');
-            modalBasicSection.classList.add('active');
-            modalExtendedSection.classList.remove('active');
 
             // Общий счёт – показываем базовую оценку
             modalScore.textContent = basicScore.toFixed(1) + ' / 10';
             modalScore.className = 'modal-score';
 
-            // Фон модалки по расширенной оценке (если есть, иначе нейтральный)
-            const rankClass = getRankClass(item.extendedScore);
+            // Фон модалки – для мультфильмов специальный класс
+            let rankClass = getRankClass(item);
             modalContent.className = 'modal-content ' + rankClass;
 
             modalEditBtn.style.display = 'block';
@@ -1138,31 +1201,54 @@
 
         modalEditBtn.addEventListener('click', function() {
             if (!currentModalItemId) return;
-            isEditMode = true;
-            // Включаем все слайдеры
-            document.querySelectorAll('#modal-basic-section input, #modal-extended-section input').forEach(inp => inp.disabled = false);
-            // Добавляем обработчики для расширенных слайдеров, если их нет
-            const extSliders = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
-            extSliders.forEach(id => {
-                const slider = document.getElementById(`modal-slider-${id}`);
-                if (!slider._listener) {
-                    slider.addEventListener('input', updateModalExtendedScore);
-                    slider._listener = true;
+            // Проверяем, не мультфильм ли
+            getCurrentModalItem().then(item => {
+                if (item && item.type === 'cartoon') {
+                    // Для мультфильмов только базовый слайдер
+                    document.querySelectorAll('#modal-basic-section input').forEach(inp => inp.disabled = false);
+                    // Расширенные не трогаем
+                    if (!modalBasicSlider._listener) {
+                        modalBasicSlider.addEventListener('input', function() {
+                            const val = parseFloat(this.value);
+                            modalBasicVal.textContent = val.toFixed(1);
+                            modalScore.textContent = val.toFixed(1) + ' / 10';
+                            updateSliderStyle(this, '#3a86ff');
+                        });
+                        modalBasicSlider._listener = true;
+                    }
+                    isEditMode = true;
+                    modalEditBtn.style.display = 'none';
+                    modalSaveEditBtn.style.display = 'block';
+                    document.querySelector('.modal-content').classList.add('edit-mode');
+                    return;
                 }
-            });
-            // Обработчик для базового слайдера
-            if (!modalBasicSlider._listener) {
-                modalBasicSlider.addEventListener('input', function() {
-                    const val = parseFloat(this.value);
-                    modalBasicVal.textContent = val.toFixed(1);
-                    modalScore.textContent = val.toFixed(1) + ' / 10';
-                    updateSliderStyle(this, '#3a86ff');
+
+                // Для фильмов
+                isEditMode = true;
+                // Включаем все слайдеры
+                document.querySelectorAll('#modal-basic-section input, #modal-extended-section input').forEach(inp => inp.disabled = false);
+                // Добавляем обработчики для расширенных слайдеров, если их нет
+                const extSliders = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
+                extSliders.forEach(id => {
+                    const slider = document.getElementById(`modal-slider-${id}`);
+                    if (!slider._listener) {
+                        slider.addEventListener('input', updateModalExtendedScore);
+                        slider._listener = true;
+                    }
                 });
-                modalBasicSlider._listener = true;
-            }
-            modalEditBtn.style.display = 'none';
-            modalSaveEditBtn.style.display = 'block';
-            document.querySelector('.modal-content').classList.add('edit-mode');
+                if (!modalBasicSlider._listener) {
+                    modalBasicSlider.addEventListener('input', function() {
+                        const val = parseFloat(this.value);
+                        modalBasicVal.textContent = val.toFixed(1);
+                        modalScore.textContent = val.toFixed(1) + ' / 10';
+                        updateSliderStyle(this, '#3a86ff');
+                    });
+                    modalBasicSlider._listener = true;
+                }
+                modalEditBtn.style.display = 'none';
+                modalSaveEditBtn.style.display = 'block';
+                document.querySelector('.modal-content').classList.add('edit-mode');
+            });
         });
 
         modalSaveEditBtn.addEventListener('click', async function() {
@@ -1174,29 +1260,30 @@
             // Сохраняем базовую оценку
             item.basicScore = parseFloat(modalBasicSlider.value);
 
-            // Сохраняем расширенную, если пользователь её заполнил (проверяем, активна ли вкладка extended)
-            const activeModeBtn = modalModeToggle.querySelector('.mode-btn.active');
-            const mode = activeModeBtn ? activeModeBtn.dataset.modalMode : 'basic';
-            if (mode === 'extended') {
-                const ids = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
-                const newSliders = {};
-                ids.forEach(id => {
-                    const inp = document.getElementById(`modal-slider-${id}`);
-                    newSliders[id] = parseFloat(inp.value);
-                });
-                const base = newSliders.script + newSliders.acting + newSliders.directing;
-                const kVisual = getCoef(newSliders.visual);
-                const kSound = getCoef(newSliders.sound);
-                const kRelevance = getCoef(newSliders.relevance);
-                let extScore = base * kVisual * kSound * kRelevance;
-                extScore = Math.min(Math.round(extScore * 100) / 100, 30);
-                item.extendedScore = extScore;
-                item.sliders = newSliders;
-                item.extRank = getExtRank(extScore).label;
-            } else {
-                // Если переключились на базовую, можно оставить расширенную без изменений или удалить?
-                // По логике, пользователь может изменить базовую, а расширенная остаётся прежней.
-                // Ничего не делаем с расширенной.
+            // Если это не мультфильм и активна расширенная вкладка, сохраняем расширенную
+            const isCartoon = item.type === 'cartoon';
+            if (!isCartoon) {
+                const activeModeBtn = modalModeToggle.querySelector('.mode-btn.active');
+                const mode = activeModeBtn ? activeModeBtn.dataset.modalMode : 'basic';
+                if (mode === 'extended') {
+                    const ids = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
+                    const newSliders = {};
+                    ids.forEach(id => {
+                        const inp = document.getElementById(`modal-slider-${id}`);
+                        newSliders[id] = parseFloat(inp.value);
+                    });
+                    const base = newSliders.script + newSliders.acting + newSliders.directing;
+                    const kVisual = getCoef(newSliders.visual);
+                    const kSound = getCoef(newSliders.sound);
+                    const kRelevance = getCoef(newSliders.relevance);
+                    let extScore = base * kVisual * kSound * kRelevance;
+                    extScore = Math.min(Math.round(extScore * 100) / 100, 30);
+                    item.extendedScore = extScore;
+                    item.sliders = newSliders;
+                    item.extRank = getExtRank(extScore).label;
+                } else {
+                    // Если переключились на базовую, расширенную не трогаем
+                }
             }
 
             await saveCollection(coll);
@@ -1207,7 +1294,6 @@
 
         // ---------- КНОПКА "ФИЛЬМЫ С ТАКОЙ ОЦЕНКОЙ" ----------
         document.getElementById('similar-btn').addEventListener('click', function() {
-            // Берём базовую оценку из слайдера (всегда доступен)
             const basicScore = parseFloat(basicSlider.value);
             const rounded = Math.round(basicScore);
             if (rounded < 1 || rounded > 10) {
@@ -1215,7 +1301,7 @@
                 return;
             }
             document.querySelector('.nav-btn[data-tab="collection"]').click();
-            const targetBtn = document.querySelector(`.filter-btn[data-score="${rounded}"]`);
+            const targetBtn = document.querySelector(`#scoreFilterScroll .filter-btn[data-score="${rounded}"]`);
             if (targetBtn) {
                 targetBtn.click();
             } else {
@@ -1255,11 +1341,13 @@
 
         // ---------- ИНИЦИАЛИЗАЦИЯ ----------
         async function init() {
+            // Устанавливаем фильтр по умолчанию
+            currentScoreFilter = 'all';
+            currentStatusFilter = 'all';
             await renderCollection();
             modeBasicBtn.click();
             // Принудительно обновляем стили всех слайдеров при загрузке
             document.querySelectorAll('input[type="range"]').forEach(sl => {
-                // Для каждого слайдера определяем цвет по его id или по родительскому классу
                 let color = '#3a86ff';
                 if (sl.id.includes('visual') || sl.id.includes('sound') || sl.id.includes('relevance')) {
                     color = '#8338ec';
