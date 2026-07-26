@@ -47,8 +47,8 @@
         .tab-content {
             display: none;
             flex-direction: column;
-            gap: 16px;
-            padding: 16px;
+            gap: 14px;
+            padding: 12px;
             overflow-y: auto;
             flex-grow: 1;
             padding-bottom: 80px;
@@ -79,6 +79,7 @@
             outline: none;
             box-sizing: border-box;
             transition: border 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
         }
         .search-input:focus, .collection-search:focus {
             border-color: var(--blue-accent);
@@ -116,10 +117,12 @@
             border-radius: 8px;
             object-fit: cover;
             border: 1px solid rgba(255,255,255,0.05);
+            flex-shrink: 0;
         }
-        .search-item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .search-item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
         .search-item-title { font-weight: 600; font-size: 0.95rem; }
         .search-item-artist { font-size: 0.75rem; color: var(--text-muted); }
+        .search-item-meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
         .search-msg { padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
 
         .selected-release-card {
@@ -127,24 +130,25 @@
             backdrop-filter: blur(12px);
             border: 1px solid var(--card-border);
             border-radius: 16px;
-            padding: 16px;
+            padding: 14px;
             display: none;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
             box-shadow: var(--shadow);
         }
         .selected-release-card img {
-            width: 70px;
-            height: 100px;
+            width: 60px;
+            height: 84px;
             border-radius: 10px;
             border: 1px solid rgba(255,255,255,0.1);
             object-fit: cover;
+            flex-shrink: 0;
         }
-        .release-details { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-        .release-title { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.3px; }
-        .release-artist { font-size: 0.9rem; color: var(--blue-accent); }
+        .release-details { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+        .release-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.3px; }
+        .release-artist { font-size: 0.85rem; color: var(--blue-accent); }
         .release-meta {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
             display: flex;
             flex-wrap: wrap;
@@ -155,11 +159,12 @@
             background: rgba(255,255,255,0.06);
             padding: 2px 10px;
             border-radius: 20px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             text-transform: uppercase;
             font-weight: 600;
             letter-spacing: 0.3px;
             border: 1px solid rgba(255,255,255,0.05);
+            white-space: nowrap;
         }
         .badge-cartoon { background: rgba(155, 143, 230, 0.2); color: #b8aaff; border-color: #9b8fe6; }
 
@@ -168,15 +173,15 @@
             backdrop-filter: blur(12px);
             border: 1px solid var(--card-border);
             border-radius: 16px;
-            padding: 18px 16px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
             box-shadow: var(--shadow);
         }
         .sliders-group h2 {
             margin: 0 0 2px 0;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: var(--text-muted);
             display: flex;
@@ -186,7 +191,7 @@
             text-transform: uppercase;
         }
         .sliders-group h2 .criteria-link {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--blue-accent);
             cursor: pointer;
             background: none;
@@ -204,12 +209,12 @@
         .slider-header {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
         }
         .slider-header .value {
             font-weight: 700;
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: var(--text-color);
         }
         .blue-group .value { color: var(--blue-accent); }
@@ -244,11 +249,11 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
-            padding-top: 8px;
+            gap: 10px;
+            padding-top: 6px;
         }
         .score-display {
-            font-size: 4rem;
+            font-size: 3.5rem;
             font-weight: 900;
             color: var(--text-muted);
             text-shadow: 0 0 20px rgba(255,255,255,0.03);
@@ -260,26 +265,27 @@
             text-shadow: 0 0 60px rgba(251, 191, 36, 0.4) !important;
         }
         .score-display .slash {
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             color: var(--text-muted);
             font-weight: 300;
             margin: 0 4px;
         }
         .score-display .total { display: inline-block; }
 
-        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .action-btn {
             background: rgba(255,255,255,0.05);
             color: #fff;
             border: 1px solid rgba(255,255,255,0.08);
-            padding: 12px 18px;
-            border-radius: 14px;
-            font-size: 0.9rem;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
             backdrop-filter: blur(4px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            white-space: nowrap;
         }
         .action-btn:active { transform: scale(0.95); }
         .save-btn {
@@ -303,14 +309,14 @@
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
         #collection-list-wrapper {
             flex: 1;
             overflow-y: auto;
             padding-bottom: 10px;
         }
-        .collection-controls { display: flex; gap: 10px; flex-direction: column; }
+        .collection-controls { display: flex; gap: 8px; flex-direction: column; }
         .collection-sort {
             background: var(--glass-bg);
             backdrop-filter: blur(8px);
@@ -325,26 +331,27 @@
             background-repeat: no-repeat;
             background-position: right 12px center;
             padding-right: 36px;
+            width: 100%;
         }
 
-        /* Контейнер для фильтров с кнопками прокрутки */
         .filter-scroll-wrapper {
             position: relative;
             display: flex;
             align-items: center;
-            gap: 0;
+            gap: 4px;
+            width: 100%;
         }
         .filter-scroll-wrapper .scroll-btn {
             flex-shrink: 0;
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             background: rgba(255,255,255,0.06);
             border: 1px solid rgba(255,255,255,0.08);
             color: #aaa;
             font-size: 14px;
             cursor: pointer;
-            display: none; /* по умолчанию скрыты, показываем на десктопе */
+            display: none;
             align-items: center;
             justify-content: center;
             transition: 0.2s;
@@ -359,26 +366,29 @@
             display: flex;
             gap: 6px;
             overflow-x: auto;
-            padding: 6px 0 4px 0;
+            padding: 4px 0 6px 0;
             scrollbar-width: none;
             flex: 1;
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
+            min-height: 44px;
+            align-items: center;
         }
         .score-filter-scroll::-webkit-scrollbar { display: none; }
 
         .score-filter-scroll .filter-btn {
             flex-shrink: 0;
-            padding: 6px 16px;
+            padding: 6px 14px;
             border-radius: 30px;
             border: 1px solid rgba(255,255,255,0.06);
             background: rgba(255,255,255,0.02);
             color: #aaa;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
             backdrop-filter: blur(4px);
+            white-space: nowrap;
         }
         .score-filter-scroll .filter-btn.active {
             border-color: var(--blue-accent);
@@ -388,18 +398,18 @@
         }
         .score-filter-scroll .filter-btn:active { transform: scale(0.92); }
 
-        /* Показываем кнопки только на экранах шире 600px */
-        @media (min-width: 600px) {
+        /* Показываем кнопки только на экранах шире 768px */
+        @media (min-width: 768px) {
             .filter-scroll-wrapper .scroll-btn { display: flex; }
         }
 
         .history-list { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 20px 0; }
         .history-item {
             border-radius: 14px;
-            padding: 14px 16px;
+            padding: 12px 14px;
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
             cursor: pointer;
             transition: all 0.2s;
             border: 1px solid var(--card-border);
@@ -409,11 +419,12 @@
         }
         .history-item:hover { transform: scale(1.01); background: rgba(255,255,255,0.04); }
         .history-item img {
-            width: 44px;
-            height: 62px;
+            width: 40px;
+            height: 56px;
             border-radius: 8px;
             object-fit: cover;
             border: 1px solid rgba(255,255,255,0.05);
+            flex-shrink: 0;
         }
         .history-item-info {
             display: flex;
@@ -421,14 +432,15 @@
             gap: 2px;
             flex: 1;
             pointer-events: none;
+            min-width: 0;
         }
-        .history-item-title { font-size: 1rem; font-weight: 600; line-height: 1.2; }
+        .history-item-title { font-size: 0.95rem; font-weight: 600; line-height: 1.2; }
         .history-item-artist {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
         }
         .history-item-meta {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--text-muted);
             opacity: 0.7;
             display: flex;
@@ -440,11 +452,12 @@
         .history-item-right {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             pointer-events: none;
+            flex-shrink: 0;
         }
         .history-item-score {
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: var(--text-muted);
         }
@@ -457,7 +470,7 @@
         .history-item.rank-ruby   { border-left: 4px solid #f87171; background: rgba(248,113,113,0.06); }
         .history-item.rank-cartoon { border-left: 4px solid #9b8fe6; background: rgba(155,143,230,0.06); }
 
-        .empty-text { color: var(--text-muted); text-align: center; margin-top: 30px; font-size: 0.95rem; opacity: 0.6; }
+        .empty-text { color: var(--text-muted); text-align: center; margin-top: 30px; font-size: 0.9rem; opacity: 0.6; }
 
         .bottom-nav {
             position: fixed;
@@ -469,16 +482,16 @@
             border-top: 1px solid var(--card-border);
             display: flex;
             justify-content: space-around;
-            padding: 10px 0 24px 0;
+            padding: 10px 0 20px 0;
             z-index: 100;
         }
         .nav-btn {
             background: none;
             border: none;
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 600;
-            padding: 10px 20px;
+            padding: 8px 16px;
             cursor: pointer;
             border-radius: 30px;
             transition: 0.2s;
@@ -490,18 +503,19 @@
             box-shadow: 0 0 20px rgba(91, 140, 255, 0.05);
         }
 
-        .mode-toggle { display: flex; gap: 10px; margin: 4px 0; }
+        .mode-toggle { display: flex; gap: 8px; margin: 4px 0; }
         .mode-btn {
             flex: 1;
             background: rgba(255,255,255,0.03);
             color: var(--text-muted);
             border: 1px solid var(--card-border);
             padding: 10px;
-            border-radius: 14px;
+            border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: 0.2s;
             backdrop-filter: blur(4px);
+            font-size: 0.85rem;
         }
         .mode-btn.active {
             background: linear-gradient(135deg, var(--blue-accent), #6d28d9);
@@ -532,7 +546,7 @@
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            padding: 24px 20px;
+            padding: 20px;
             position: relative;
             box-shadow: var(--shadow);
         }
@@ -551,37 +565,38 @@
             background: rgba(255,255,255,0.05);
             border: none;
             color: #fff;
-            font-size: 1.4rem;
-            width: 36px;
-            height: 36px;
+            font-size: 1.3rem;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             backdrop-filter: blur(4px);
             transition: 0.2s;
         }
         .modal-close:hover { background: rgba(255,255,255,0.1); }
         .modal-release-header {
             display: flex;
-            gap: 14px;
-            margin-bottom: 16px;
+            gap: 12px;
+            margin-bottom: 14px;
         }
         .modal-release-header img {
-            width: 60px;
-            height: 84px;
+            width: 54px;
+            height: 76px;
             border-radius: 10px;
             object-fit: cover;
             border: 1px solid rgba(255,255,255,0.05);
+            flex-shrink: 0;
         }
-        .modal-release-header .info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-        .modal-release-header .info .title { font-size: 1.2rem; font-weight: 700; }
-        .modal-release-header .info .artist { color: var(--blue-accent); font-size: 0.9rem; }
+        .modal-release-header .info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+        .modal-release-header .info .title { font-size: 1.1rem; font-weight: 700; }
+        .modal-release-header .info .artist { color: var(--blue-accent); font-size: 0.85rem; }
         .modal-release-header .info .meta {
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
@@ -592,11 +607,11 @@
         .modal-sliders-section.active { display: block; }
 
         .modal-score {
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: 900;
             color: var(--text-muted);
             text-align: center;
-            margin: 12px 0;
+            margin: 10px 0;
             transition: color 0.3s, text-shadow 0.3s;
         }
         .modal-score.gold {
@@ -605,12 +620,12 @@
         }
         .modal-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
-            margin-top: 16px;
+            margin-top: 14px;
             flex-wrap: wrap;
         }
-        .modal-actions .action-btn { flex: 1; min-width: 80px; }
+        .modal-actions .action-btn { flex: 1; min-width: 70px; }
         .modal-actions .edit-btn { background: linear-gradient(135deg, var(--purple-accent), #7c3aed); border: none; color: #fff; }
         .modal-actions .save-edit-btn { background: linear-gradient(135deg, var(--blue-accent), #6d28d9); border: none; color: #fff; display: none; }
         .modal-actions .kp-link-btn { background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); color: #fff; }
@@ -621,22 +636,28 @@
         .criteria-content h3 {
             color: var(--blue-accent);
             margin: 16px 0 4px 0;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
         }
         .criteria-content p {
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             line-height: 1.5;
             margin: 0 0 8px 0;
         }
         .criteria-content .purple-title { color: var(--purple-accent); }
 
+        /* Адаптив для маленьких экранов */
         @media (max-width: 420px) {
-            .score-display { font-size: 3rem; }
-            .modal-score { font-size: 2.8rem; }
-            .history-item { padding: 12px; gap: 10px; }
-            .history-item img { width: 36px; height: 50px; }
+            .score-display { font-size: 2.8rem; }
+            .modal-score { font-size: 2.5rem; }
+            .history-item { padding: 10px 12px; gap: 10px; }
+            .history-item img { width: 34px; height: 48px; }
+            .history-item-score { font-size: 1rem; }
+            .action-btn { padding: 8px 12px; font-size: 0.8rem; }
+            .sliders-group { padding: 12px; }
+            .tab-content { padding: 10px; }
+            .release-title { font-size: 1rem; }
         }
     </style>
 </head>
@@ -667,7 +688,7 @@
         <div id="basic-sliders" class="sliders-group blue-group">
             <h2>
                 ⭐ Оценка фильма
-                <button class="criteria-link" id="criteria-btn">Критерии оценки</button>
+                <button class="criteria-link" id="criteria-btn">Критерии</button>
             </h2>
             <div class="slider-container">
                 <div class="slider-header"><span>Общая оценка</span><span class="value" id="basic-val">5.0</span></div>
@@ -679,7 +700,7 @@
         <div id="extended-sliders" class="sliders-group blue-group" style="display:none;">
             <h2>
                 📝 Базовые показатели
-                <button class="criteria-link" id="criteria-btn-ext">Критерии оценки</button>
+                <button class="criteria-link" id="criteria-btn-ext">Критерии</button>
             </h2>
             <div class="slider-container">
                 <div class="slider-header"><span>Сюжет и сценарий</span><span class="value" id="val-script">3.0</span></div>
@@ -708,10 +729,10 @@
                 <div class="slider-header"><span>Актуальность / Смысл</span><span class="value" id="val-relevance">3.0</span></div>
                 <input type="range" id="slider-relevance" min="1" max="5" step="1" value="3">
             </div>
-            <div class="result-box" style="background:rgba(255,255,255,0.03); border-radius:14px; padding:14px; margin-top:6px; text-align:center; border:1px solid rgba(255,255,255,0.04);">
-                <div style="font-size:1.3rem; font-weight:700;" id="extended-score">16.20</div>
-                <div style="font-size:0.9rem; color:var(--text-muted);" id="extended-rank">💎 Изумрудный фильм</div>
-                <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; font-size:0.7rem; color:var(--text-muted); margin-top:6px;">
+            <div class="result-box" style="background:rgba(255,255,255,0.03); border-radius:14px; padding:12px; margin-top:6px; text-align:center; border:1px solid rgba(255,255,255,0.04);">
+                <div style="font-size:1.2rem; font-weight:700;" id="extended-score">16.20</div>
+                <div style="font-size:0.85rem; color:var(--text-muted);" id="extended-rank">💎 Изумрудный фильм</div>
+                <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; font-size:0.65rem; color:var(--text-muted); margin-top:6px;">
                     <span>Базовые: <span id="base-sum">9.0</span></span>
                     <span>Визуал: <span id="coef-visual">1.03</span></span>
                     <span>Саунд: <span id="coef-sound">1.03</span></span>
@@ -742,7 +763,7 @@
                     <option value="lowest">Сначала низкие баллы</option>
                 </select>
             </div>
-            <!-- Фильтр по баллам с кнопками прокрутки -->
+            <!-- Фильтр по баллам -->
             <div class="filter-scroll-wrapper" id="scoreFilterWrapper">
                 <button class="scroll-btn" id="scrollLeftScore">◀</button>
                 <div class="score-filter-scroll" id="scoreFilterScroll">
@@ -761,7 +782,7 @@
                 <button class="scroll-btn" id="scrollRightScore">▶</button>
             </div>
 
-            <!-- Фильтр по статусам с кнопками прокрутки -->
+            <!-- Фильтр по статусам -->
             <div class="filter-scroll-wrapper" id="statusFilterWrapper">
                 <button class="scroll-btn" id="scrollLeftStatus">◀</button>
                 <div class="score-filter-scroll" id="statusFilterScroll">
@@ -845,9 +866,9 @@
                         <div class="slider-header"><span>Актуальность / Смысл</span><span class="value" id="modal-val-relevance">3.0</span></div>
                         <input type="range" id="modal-slider-relevance" min="1" max="5" step="1" value="3" disabled />
                     </div>
-                    <div class="result-box" style="background:rgba(255,255,255,0.03); border-radius:14px; padding:14px; margin-top:6px; text-align:center; border:1px solid rgba(255,255,255,0.04);">
-                        <div style="font-size:1.3rem; font-weight:700;" id="modal-extended-score">16.20</div>
-                        <div style="font-size:0.9rem; color:var(--text-muted);" id="modal-extended-rank">💎 Изумрудный фильм</div>
+                    <div class="result-box" style="background:rgba(255,255,255,0.03); border-radius:14px; padding:12px; margin-top:6px; text-align:center; border:1px solid rgba(255,255,255,0.04);">
+                        <div style="font-size:1.2rem; font-weight:700;" id="modal-extended-score">16.20</div>
+                        <div style="font-size:0.85rem; color:var(--text-muted);" id="modal-extended-rank">💎 Изумрудный фильм</div>
                     </div>
                 </div>
             </div>
@@ -1163,9 +1184,7 @@
                         <div class="search-item-info">
                             <div class="search-item-title">${f.title}</div>
                             <div class="search-item-artist">${f.year} · ${f.genres || '—'}</div>
-                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">
-                                🌍 ${f.country}
-                            </div>
+                            <div class="search-item-meta">🌍 ${f.country}</div>
                         </div>
                         <span class="badge ${f.isCartoon ? 'badge-cartoon' : ''}">${f.isCartoon ? '🎨 Мульт' : '🎬 Фильм'}</span>
                     </div>
@@ -1288,7 +1307,6 @@
             if (!wrapper || !container || !leftBtn || !rightBtn) return;
 
             const step = () => {
-                // ширина видимой области минус отступы
                 return container.clientWidth * 0.8;
             };
 
@@ -1299,17 +1317,12 @@
                 container.scrollBy({ left: step(), behavior: 'smooth' });
             });
 
-            // Прокрутка колёсиком мыши
             container.addEventListener('wheel', (e) => {
-                if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
-                    // если вертикальная прокрутка – игнорируем
-                    return;
-                }
+                if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) return;
                 e.preventDefault();
                 container.scrollBy({ left: e.deltaX, behavior: 'smooth' });
             }, { passive: false });
 
-            // Автоматически показывать/скрывать кнопки в зависимости от возможности прокрутки
             function updateButtonsVisibility() {
                 const maxScroll = container.scrollWidth - container.clientWidth;
                 leftBtn.style.display = container.scrollLeft > 0 ? 'flex' : 'none';
@@ -1317,8 +1330,7 @@
             }
             container.addEventListener('scroll', updateButtonsVisibility);
             window.addEventListener('resize', updateButtonsVisibility);
-            // Инициализация
-            setTimeout(updateButtonsVisibility, 100);
+            setTimeout(updateButtonsVisibility, 150);
         }
 
         setupScrollButtons('scoreFilterWrapper', 'scoreFilterScroll', 'scrollLeftScore', 'scrollRightScore');
@@ -1331,7 +1343,6 @@
                 this.classList.add('active');
                 currentScoreFilter = this.dataset.score;
                 renderCollection();
-                // прокручиваем контейнер, чтобы активная кнопка была видна
                 const container = document.getElementById('scoreFilterScroll');
                 const btnRect = this.getBoundingClientRect();
                 const containerRect = container.getBoundingClientRect();
