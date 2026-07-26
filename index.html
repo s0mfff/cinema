@@ -6,7 +6,7 @@
     <title>Оценка фильма</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* ===== ОБНОВЛЁННЫЙ ДИЗАЙН ===== */
+        /* ===== ОБНОВЛЁННЫЙ ДИЗАЙН (ИСПРАВЛЕННЫЙ ДЛЯ МОБИЛОК) ===== */
         :root {
             --bg-color: #0b0b0e;
             --card-bg: rgba(28, 30, 36, 0.7);
@@ -19,8 +19,9 @@
             --border-color: rgba(255, 255, 255, 0.06);
             --red-accent: #f87171;
             --cartoon-color: #9b8fe6;
-            --glass-bg: rgba(20, 22, 28, 0.6);
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            /* Сделали фон чуть плотнее, так как убрали глючный blur */
+            --glass-bg: rgba(28, 30, 36, 0.85); 
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -33,7 +34,7 @@
             flex-direction: column;
             height: 100vh;
             user-select: none;
-            backdrop-filter: blur(2px);
+            /* Убрали backdrop-filter с body, он тут не нужен и тормозит */
         }
         body::before {
             content: '';
@@ -57,21 +58,11 @@
         }
         .tab-content.active { display: flex; }
 
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px) saturate(1.2);
-            -webkit-backdrop-filter: blur(12px) saturate(1.2);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-        }
-
         .search-container { position: relative; }
         .search-input, .collection-search {
             width: 100%;
             padding: 14px 16px;
             background: var(--glass-bg);
-            backdrop-filter: blur(8px);
             border: 1px solid var(--card-border);
             border-radius: 14px;
             color: #fff;
@@ -90,8 +81,7 @@
             top: 100%;
             left: 0;
             right: 0;
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
+            background: rgba(28, 30, 36, 0.95);
             border: 1px solid var(--card-border);
             border-top: none;
             border-radius: 0 0 14px 14px;
@@ -127,7 +117,6 @@
 
         .selected-release-card {
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
             border: 1px solid var(--card-border);
             border-radius: 16px;
             padding: 14px;
@@ -170,7 +159,6 @@
 
         .sliders-group {
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
             border: 1px solid var(--card-border);
             border-radius: 16px;
             padding: 16px;
@@ -244,13 +232,14 @@
         input[type="range"]:disabled::-webkit-slider-thumb { background: #555; border-color: #333; cursor: default; transform: none; }
         input[type="range"]:disabled { opacity: 0.5; }
 
+        /* ИСПРАВЛЕННЫЙ БЛОК КНОПОК И ОЦЕНКИ */
         .footer-score {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding-top: 6px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+            padding-top: 12px;
+            margin-top: auto;
         }
         .score-display {
             font-size: 3.5rem;
@@ -259,10 +248,12 @@
             text-shadow: 0 0 20px rgba(255,255,255,0.03);
             transition: color 0.3s, text-shadow 0.3s;
             line-height: 1;
+            text-align: center;
         }
         .score-display.gold {
             color: var(--gold) !important;
-            text-shadow: 0 0 60px rgba(251, 191, 36, 0.4) !important;
+            /* Уменьшили тень, чтобы не было огромного засвета */
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.4) !important; 
         }
         .score-display .slash {
             font-size: 1.4rem;
@@ -272,20 +263,28 @@
         }
         .score-display .total { display: inline-block; }
 
-        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .btn-group { 
+            display: flex; 
+            gap: 10px; 
+            width: 100%; 
+        }
         .action-btn {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             background: rgba(255,255,255,0.05);
             color: #fff;
             border: 1px solid rgba(255,255,255,0.08);
-            padding: 10px 16px;
+            padding: 12px 8px;
             border-radius: 12px;
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            backdrop-filter: blur(4px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            white-space: nowrap;
+            text-align: center;
+            line-height: 1.2;
         }
         .action-btn:active { transform: scale(0.95); }
         .save-btn {
@@ -318,8 +317,7 @@
         }
         .collection-controls { display: flex; gap: 8px; flex-direction: column; }
         .collection-sort {
-            background: var(--glass-bg);
-            backdrop-filter: blur(8px);
+            background-color: var(--glass-bg);
             color: #fff;
             border: 1px solid var(--card-border);
             padding: 12px 14px;
@@ -355,7 +353,6 @@
             align-items: center;
             justify-content: center;
             transition: 0.2s;
-            backdrop-filter: blur(4px);
             user-select: none;
             z-index: 2;
         }
@@ -387,7 +384,6 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
-            backdrop-filter: blur(4px);
             white-space: nowrap;
         }
         .score-filter-scroll .filter-btn.active {
@@ -398,7 +394,6 @@
         }
         .score-filter-scroll .filter-btn:active { transform: scale(0.92); }
 
-        /* Показываем кнопки только на экранах шире 768px */
         @media (min-width: 768px) {
             .filter-scroll-wrapper .scroll-btn { display: flex; }
         }
@@ -414,7 +409,6 @@
             transition: all 0.2s;
             border: 1px solid var(--card-border);
             background: var(--glass-bg);
-            backdrop-filter: blur(8px);
             box-shadow: var(--shadow);
         }
         .history-item:hover { transform: scale(1.01); background: rgba(255,255,255,0.04); }
@@ -477,8 +471,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(11, 11, 14, 0.8);
-            backdrop-filter: blur(20px);
+            background: rgba(11, 11, 14, 0.98);
             border-top: 1px solid var(--card-border);
             display: flex;
             justify-content: space-around;
@@ -495,7 +488,6 @@
             cursor: pointer;
             border-radius: 30px;
             transition: 0.2s;
-            backdrop-filter: blur(4px);
         }
         .nav-btn.active {
             background: rgba(91, 140, 255, 0.12);
@@ -514,7 +506,6 @@
             font-weight: 600;
             cursor: pointer;
             transition: 0.2s;
-            backdrop-filter: blur(4px);
             font-size: 0.85rem;
         }
         .mode-btn.active {
@@ -530,7 +521,7 @@
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(5px); /* Оставили легкий блюр только для фона модалки */
             z-index: 200;
             justify-content: center;
             align-items: center;
@@ -538,8 +529,6 @@
         }
         .modal-overlay.active { display: flex; }
         .modal-content {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
             border: 1px solid var(--card-border);
             border-radius: 20px;
             max-width: 480px;
@@ -550,13 +539,14 @@
             position: relative;
             box-shadow: var(--shadow);
         }
-        .modal-content.rank-neutral { background: rgba(30,30,40,0.8); }
-        .modal-content.rank-silver { background: rgba(40,40,50,0.8); }
-        .modal-content.rank-gold   { background: rgba(60,50,20,0.8); }
-        .modal-content.rank-emerald{ background: rgba(20,50,30,0.8); }
-        .modal-content.rank-sapphire{ background: rgba(20,40,70,0.8); }
-        .modal-content.rank-ruby   { background: rgba(70,20,20,0.8); }
-        .modal-content.rank-cartoon{ background: rgba(40,30,70,0.8); }
+        /* Сделали фоны модалки более плотными */
+        .modal-content.rank-neutral { background: rgba(30,30,40,0.95); }
+        .modal-content.rank-silver { background: rgba(40,40,50,0.95); }
+        .modal-content.rank-gold   { background: rgba(60,50,20,0.95); }
+        .modal-content.rank-emerald{ background: rgba(20,50,30,0.95); }
+        .modal-content.rank-sapphire{ background: rgba(20,40,70,0.95); }
+        .modal-content.rank-ruby   { background: rgba(70,20,20,0.95); }
+        .modal-content.rank-cartoon{ background: rgba(40,30,70,0.95); }
 
         .modal-close {
             position: sticky;
@@ -574,7 +564,6 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 8px;
-            backdrop-filter: blur(4px);
             transition: 0.2s;
         }
         .modal-close:hover { background: rgba(255,255,255,0.1); }
@@ -616,16 +605,16 @@
         }
         .modal-score.gold {
             color: var(--gold) !important;
-            text-shadow: 0 0 40px rgba(251, 191, 36, 0.3) !important;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.3) !important; /* Уменьшили тень */
         }
         .modal-actions {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             justify-content: center;
             margin-top: 14px;
-            flex-wrap: wrap;
+            width: 100%;
         }
-        .modal-actions .action-btn { flex: 1; min-width: 70px; }
+        .modal-actions .action-btn { flex: 1; padding: 12px 8px; }
         .modal-actions .edit-btn { background: linear-gradient(135deg, var(--purple-accent), #7c3aed); border: none; color: #fff; }
         .modal-actions .save-edit-btn { background: linear-gradient(135deg, var(--blue-accent), #6d28d9); border: none; color: #fff; display: none; }
         .modal-actions .kp-link-btn { background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); color: #fff; }
@@ -654,7 +643,7 @@
             .history-item { padding: 10px 12px; gap: 10px; }
             .history-item img { width: 34px; height: 48px; }
             .history-item-score { font-size: 1rem; }
-            .action-btn { padding: 8px 12px; font-size: 0.8rem; }
+            .action-btn { font-size: 0.8rem; }
             .sliders-group { padding: 12px; }
             .tab-content { padding: 10px; }
             .release-title { font-size: 1rem; }
