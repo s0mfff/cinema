@@ -7,7 +7,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== ВСЕ СТИЛИ ===== */
+        /* ===== ВСЕ СТИЛИ (без изменений, они рабочие) ===== */
         :root {
             --bg-color: #0b0b0e;
             --card-bg: rgba(28, 30, 36, 0.7);
@@ -62,7 +62,6 @@
             z-index: 1;
         }
         .tab-content.active { display: flex; }
-        
         .glass {
             background: var(--glass-bg);
             border: 1px solid var(--card-border);
@@ -1013,7 +1012,7 @@
 
     <script>
         /* ==========================================================
-           ЛОГИКА С API TMDb
+           КОД С ИСПРАВЛЕННЫМ API TMDb
            ========================================================== */
         const tg = window.Telegram.WebApp;
         tg.ready();
@@ -1026,57 +1025,74 @@
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ---------- API TMDb ----------
+        // ⚠️ ЗАМЕНИТЕ КЛЮЧ НА СВОЙ, ПОЛУЧЕННЫЙ НА themoviedb.org
         const TMDB_API_KEY = '82c00a88e84bebb0afa54621dee4befc';
         const TMDB_BASE = 'https://api.themoviedb.org/3';
         const IMG_BASE = 'https://image.tmdb.org/t/p';
 
-        // Поиск фильмов
+        // Поиск фильмов (исправлено: добавлена обработка ошибок, fallback для пустого ответа)
         async function searchTMDB(query) {
             const url = `${TMDB_BASE}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=ru-RU`;
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const data = await resp.json();
-            return data.results.map(f => ({
-                id: f.id,
-                title: f.title || f.original_title || 'Без названия',
-                year: f.release_date ? f.release_date.slice(0, 4) : 'Неизвестно',
-                image: f.poster_path ? `${IMG_BASE}/w92${f.poster_path}` : '',
-                rating: f.vote_average || 0,
-                overview: f.overview || '',
-                genre_ids: f.genre_ids || [],
-            }));
+            console.log('🔍 Запрос к TMDb:', url);
+            try {
+                const resp = await fetch(url);
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    throw new Error(`HTTP ${resp.status}: ${text.slice(0, 200)}`);
+                }
+                const data = await resp.json();
+                if (!data.results) return [];
+                return data.results.map(f => ({
+                    id: f.id,
+                    title: f.title || f.original_title || 'Без названия',
+                    year: f.release_date ? f.release_date.slice(0, 4) : 'Неизвестно',
+                    image: f.poster_path ? `${IMG_BASE}/w92${f.poster_path}` : '',
+                    rating: f.vote_average || 0,
+                    overview: f.overview || '',
+                    genre_ids: f.genre_ids || [],
+                }));
+            } catch (e) {
+                console.error('❌ Ошибка searchTMDB:', e);
+                throw e;
+            }
         }
 
-        // Получение деталей фильма
+        // Получение деталей фильма (исправлено: добавлена обработка ошибок)
         async function getFilmDetailsTMDB(filmId) {
             const url = `${TMDB_BASE}/movie/${filmId}?api_key=${TMDB_API_KEY}&language=ru-RU`;
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const data = await resp.json();
+            console.log('🔍 Детали фильма:', url);
+            try {
+                const resp = await fetch(url);
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    throw new Error(`HTTP ${resp.status}: ${text.slice(0, 200)}`);
+                }
+                const data = await resp.json();
 
-            // Жанры
-            const genres = data.genres ? data.genres.map(g => g.name).join(', ') : '—';
-            // Определяем мультфильм по жанрам (анимация)
-            const isCartoon = data.genres ? data.genres.some(g => 
-                g.name.toLowerCase().includes('мультфильм') || 
-                g.name.toLowerCase().includes('анимация') ||
-                g.name.toLowerCase().includes('family') // семейный часто ассоциируется с мультфильмами
-            ) : false;
+                const genres = data.genres ? data.genres.map(g => g.name).join(', ') : '—';
+                const isCartoon = data.genres ? data.genres.some(g => 
+                    g.name.toLowerCase().includes('мультфильм') || 
+                    g.name.toLowerCase().includes('анимация') ||
+                    g.name.toLowerCase().includes('family')
+                ) : false;
 
-            // Страны
-            let country = 'Неизвестно';
-            if (data.production_countries && data.production_countries.length > 0) {
-                country = data.production_countries.map(c => c.name).join(', ');
+                let country = 'Неизвестно';
+                if (data.production_countries && data.production_countries.length > 0) {
+                    country = data.production_countries.map(c => c.name).join(', ');
+                }
+
+                return {
+                    genres: genres,
+                    isCartoon: isCartoon,
+                    year: data.release_date ? data.release_date.slice(0, 4) : 'Неизвестно',
+                    poster: data.poster_path ? `${IMG_BASE}/w342${data.poster_path}` : '',
+                    country: country,
+                    overview: data.overview || '',
+                };
+            } catch (e) {
+                console.error('❌ Ошибка getFilmDetailsTMDB:', e);
+                throw e;
             }
-
-            return {
-                genres: genres,
-                isCartoon: isCartoon,
-                year: data.release_date ? data.release_date.slice(0, 4) : 'Неизвестно',
-                poster: data.poster_path ? `${IMG_BASE}/w342${data.poster_path}` : '',
-                country: country,
-                overview: data.overview || '',
-            };
         }
 
         // ---------- ПОЛЬЗОВАТЕЛИ ----------
@@ -1368,7 +1384,7 @@
         async function performSearch(query) {
             try {
                 const films = await searchTMDB(query);
-                if (films.length === 0) {
+                if (!films || films.length === 0) {
                     searchResults.innerHTML = '<div class="search-msg">Ничего не найдено</div>';
                     return;
                 }
@@ -1376,7 +1392,10 @@
                     try {
                         const details = await getFilmDetailsTMDB(f.id);
                         return { ...f, ...details };
-                    } catch { return { ...f, genres: 'Неизвестно', isCartoon: false, country: 'Неизвестно' }; }
+                    } catch (e) {
+                        console.warn('Не удалось получить детали для', f.id, e);
+                        return { ...f, genres: 'Неизвестно', isCartoon: false, country: 'Неизвестно' };
+                    }
                 }));
                 searchResults.innerHTML = enriched.map(f => `
                     <div class="search-item" data-id="${f.id}">
@@ -1397,7 +1416,8 @@
                     });
                 });
             } catch (err) {
-                searchResults.innerHTML = `<div class="search-msg" style="color:var(--red-accent);">Ошибка: ${err.message}</div>`;
+                console.error('Ошибка поиска:', err);
+                searchResults.innerHTML = `<div class="search-msg" style="color:var(--red-accent);">Ошибка: ${err.message}. Проверьте консоль.</div>`;
             }
         }
 
@@ -1502,7 +1522,7 @@
                 return;
             }
             tg.showAlert('Оценка сохранена!');
-            renderCollection(USER_ID);
+            renderCollection(USER_ID, collectionList);
         });
 
         // ---------- КОЛЛЕКЦИЯ ----------
@@ -1544,7 +1564,7 @@
                 filterButtons.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentScoreFilter = this.dataset.score;
-                renderCollection(currentViewUserId);
+                renderCollection(currentViewUserId, getCurrentList());
                 const container = document.getElementById('scoreFilterScroll');
                 const btnRect = this.getBoundingClientRect();
                 const containerRect = container.getBoundingClientRect();
@@ -1558,7 +1578,7 @@
                 statusFilterButtons.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentStatusFilter = this.dataset.status;
-                renderCollection(currentViewUserId);
+                renderCollection(currentViewUserId, getCurrentList());
                 const container = document.getElementById('statusFilterScroll');
                 const btnRect = this.getBoundingClientRect();
                 const containerRect = container.getBoundingClientRect();
@@ -1567,9 +1587,18 @@
             });
         });
 
-        async function renderCollection(userId = USER_ID, targetList = collectionList) {
-            const query = collectionSearch ? collectionSearch.value.toLowerCase() : '';
-            const sortMethod = collectionSort ? collectionSort.value : 'newest';
+        // Определяем, какой список рисовать – коллекция или пользователи
+        function getCurrentList() {
+            if (document.getElementById('tab-users').classList.contains('active') && !isUserListVisible) {
+                return userList;
+            }
+            return collectionList;
+        }
+
+        async function renderCollection(userId, targetList) {
+            if (!targetList) targetList = collectionList;
+            const query = collectionSearch.value.toLowerCase();
+            const sortMethod = collectionSort.value;
 
             let data = await loadUserMovies(userId);
 
@@ -1622,11 +1651,10 @@
             });
         }
 
-        collectionSearch.addEventListener('input', () => renderCollection(currentViewUserId));
-        collectionSort.addEventListener('change', () => renderCollection(currentViewUserId));
+        collectionSearch.addEventListener('input', () => renderCollection(currentViewUserId, getCurrentList()));
+        collectionSort.addEventListener('change', () => renderCollection(currentViewUserId, getCurrentList()));
 
         // ---------- ВКЛАДКА "ПОЛЬЗОВАТЕЛИ" ----------
-        const userListWrapper = document.getElementById('user-list-wrapper');
         const userList = document.getElementById('user-list');
         const userFilters = document.getElementById('user-filters');
 
@@ -1678,6 +1706,10 @@
 
             currentScoreFilter = 'all';
             currentStatusFilter = 'all';
+            // Сброс активных кнопок
+            document.querySelectorAll('#scoreFilterScroll .filter-btn, #statusFilterScroll .filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('#scoreFilterScroll .filter-btn[data-score="all"]')?.classList.add('active');
+            document.querySelector('#statusFilterScroll .filter-btn[data-status="all"]')?.classList.add('active');
 
             renderCollection(userId, userList);
         }
@@ -1800,7 +1832,6 @@
             modalType.className = 'badge' + (item.type === 'cartoon' ? ' badge-cartoon' : '');
             modalCountry.textContent = `🌍 ${item.country || 'Неизвестно'}`;
 
-            // Ссылка на TMDb
             modalKpBtn.onclick = function() {
                 tg.openLink(`https://www.themoviedb.org/movie/${item.id}`);
             };
