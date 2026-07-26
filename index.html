@@ -6,7 +6,7 @@
     <title>Оценка фильма</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* ========== ОСНОВНЫЕ СТИЛИ ========== */
+        /* ===== ОСНОВНЫЕ СТИЛИ (без изменений) ===== */
         :root {
             --bg-color: #111113;
             --card-bg: #1d1e22;
@@ -33,7 +33,6 @@
         .tab-content { display: none; flex-direction: column; gap: 16px; padding: 16px; overflow-y: auto; flex-grow: 1; padding-bottom: 80px; }
         .tab-content.active { display: flex; }
 
-        /* Поиск */
         .search-container { position: relative; }
         .search-input, .collection-search { width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; color: #fff; font-size: 1rem; outline: none; box-sizing: border-box; }
         .search-input:focus, .collection-search:focus { border-color: var(--blue-accent); }
@@ -46,7 +45,6 @@
         .search-item-artist { font-size: 0.75rem; color: var(--text-muted); }
         .search-msg { padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
 
-        /* Карточка выбранного фильма */
         .selected-release-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: none; align-items: center; gap: 16px; }
         .selected-release-card img { width: 70px; height: 70px; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover; }
         .release-details { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; }
@@ -55,7 +53,6 @@
         .release-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
         .badge { background: #2c2d31; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase; font-weight: bold; }
 
-        /* Слайдеры */
         .sliders-group { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
         .sliders-group h2 {
             margin: 0 0 4px 0;
@@ -120,7 +117,7 @@
         .similar-btn { background: #2a2b30; color: #fff; }
         .action-btn:active { transform: scale(0.95); }
 
-        /* ========== КОЛЛЕКЦИЯ ========== */
+        /* ===== КОЛЛЕКЦИЯ ===== */
         .collection-controls { display: flex; gap: 10px; flex-direction: column; }
         .collection-sort { background: var(--card-bg); color: #fff; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; font-size: 0.9rem; outline: none; }
 
@@ -173,16 +170,16 @@
             color: var(--text-muted);
         }
 
-        /* ===== ЦВЕТНЫЕ ФОНЫ ДЛЯ ЭЛЕМЕНТОВ КОЛЛЕКЦИИ (твои цвета) ===== */
-        .history-item.rank-silver { background-color: rgba(201, 201, 201, 0.12); border-left: 4px solid #c9c9c9; }
-        .history-item.rank-gold   { background-color: rgba(255, 204, 0, 0.15); border-left: 4px solid #ffcc00; }
-        .history-item.rank-emerald{ background-color: rgba(31, 139, 77, 0.15); border-left: 4px solid #1f8b4d; }
-        .history-item.rank-sapphire{ background-color: rgba(34, 125, 186, 0.15); border-left: 4px solid #227dba; }
-        .history-item.rank-ruby   { background-color: rgba(231, 76, 60, 0.15); border-left: 4px solid #e74c3c; }
+        /* ===== ЦВЕТНЫЕ ФОНЫ ПО РАСШИРЕННОЙ ОЦЕНКЕ ===== */
+        .history-item.rank-neutral { background: rgba(255,255,255,0.03); border-left: 4px solid #555; }
+        .history-item.rank-silver { background: rgba(201, 201, 201, 0.12); border-left: 4px solid #c9c9c9; }
+        .history-item.rank-gold   { background: rgba(255, 204, 0, 0.15); border-left: 4px solid #ffcc00; }
+        .history-item.rank-emerald{ background: rgba(31, 139, 77, 0.15); border-left: 4px solid #1f8b4d; }
+        .history-item.rank-sapphire{ background: rgba(34, 125, 186, 0.15); border-left: 4px solid #227dba; }
+        .history-item.rank-ruby   { background: rgba(231, 76, 60, 0.15); border-left: 4px solid #e74c3c; }
 
         .empty-text { color: var(--text-muted); text-align: center; margin-top: 20px; font-size: 0.9rem; }
 
-        /* ========== НИЖНЕЕ МЕНЮ ========== */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #111113; border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0 20px 0; z-index: 100; }
         .nav-btn { background: none; border: none; color: var(--text-muted); font-size: 1rem; font-weight: bold; padding: 10px 20px; cursor: pointer; border-radius: 20px; transition: 0.2s; }
         .nav-btn.active { background: var(--card-bg); color: var(--blue-accent); }
@@ -192,7 +189,7 @@
         .mode-btn.active { background: var(--blue-accent); }
         .mode-btn:active { transform: scale(0.95); }
 
-        /* ========== МОДАЛЬНОЕ ОКНО ========== */
+        /* ===== МОДАЛЬНОЕ ОКНО ===== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -215,7 +212,7 @@
             position: relative;
             transition: background 0.3s;
         }
-        /* Фоны модалки по рангу (тёмные версии твоих цветов) */
+        .modal-content.rank-neutral { background: #2a2a2a; }
         .modal-content.rank-silver { background: #2a2a2a; }
         .modal-content.rank-gold   { background: #3d3a1a; }
         .modal-content.rank-emerald{ background: #0a3a1a; }
@@ -286,7 +283,6 @@
         .edit-mode .modal-actions .save-edit-btn { display: block; }
         .edit-mode .modal-actions .edit-btn { display: none; }
 
-        /* ========== МОДАЛЬНОЕ ОКНО КРИТЕРИЕВ ========== */
         .criteria-content { padding: 8px 0; }
         .criteria-content h3 {
             color: var(--blue-accent);
@@ -337,7 +333,6 @@
                 <div class="slider-header"><span>Общая оценка</span><span class="value" id="basic-val">5.0</span></div>
                 <input type="range" id="basic-slider" min="1" max="10" step="0.5" value="5">
             </div>
-            <!-- строка с подсказкой УДАЛЕНА (теперь кнопка "Фильмы с такой оценкой" внизу) -->
         </div>
 
         <!-- Расширенный режим -->
@@ -407,7 +402,6 @@
             </select>
         </div>
 
-        <!-- Фильтр по оценкам -->
         <div class="score-filter-scroll" id="scoreFilterScroll">
             <button class="filter-btn active" data-score="all">Все</button>
             <button class="filter-btn" data-score="1">1</button>
@@ -444,7 +438,6 @@
                 </div>
             </div>
 
-            <!-- Переключатель режимов в модалке -->
             <div class="mode-toggle" id="modal-mode-toggle">
                 <button class="mode-btn active" data-modal-mode="basic">⭐ Базовая</button>
                 <button class="mode-btn" data-modal-mode="extended">📊 Расширенная</button>
@@ -501,7 +494,6 @@
                 <button class="action-btn edit-btn" id="modal-edit-btn">✏️ Изменить</button>
                 <button class="action-btn save-edit-btn" id="modal-save-edit-btn" style="display:none;">💾 Сохранить</button>
                 <button class="action-btn kp-link-btn" id="modal-kp-btn">🎬 Кинопоиск</button>
-                <!-- кнопка "Удалить" удалена -->
             </div>
         </div>
     </div>
@@ -605,10 +597,10 @@
 
         // ---------- Основные переменные ----------
         let selectedFilm = null;
-        let currentMode = 'basic';
+        let currentMode = 'basic'; // 'basic' или 'extended'
         let currentScoreFilter = 'all';
 
-        // Элементы DOM
+        // DOM-элементы
         const searchInput = document.getElementById('search-input');
         const searchResults = document.getElementById('search-results');
         const selectedRelease = document.getElementById('selected-release');
@@ -653,8 +645,8 @@
         const scoreDisplay = document.getElementById('score-display');
         const totalScore = document.getElementById('total-score');
 
-        // Ранги
-        const ranks = [
+        // Ранги для расширенной оценки (30-балльная шкала)
+        const extRanks = [
             { min: 0.34, max: 5.99, label: 'Серебряный', emoji: '🥈' },
             { min: 6, max: 11.99, label: 'Золотой', emoji: '🥇' },
             { min: 12, max: 17.99, label: 'Изумрудный', emoji: '💎' },
@@ -662,18 +654,19 @@
             { min: 24, max: 30, label: 'Рубиновый', emoji: '🔴' }
         ];
 
-        function getRank(score) {
-            for (let r of ranks) if (score >= r.min && score <= r.max) return r;
-            return ranks[0];
+        function getExtRank(score) {
+            for (let r of extRanks) if (score >= r.min && score <= r.max) return r;
+            return extRanks[0];
         }
 
         function getCoef(val) { return 0.80 + (val - 1) * 0.115; }
 
-        // Функция для красивого ползунка (градиент)
+        // ---------- Функция для обновления стиля ползунка (градиент) ----------
         function updateSliderStyle(slider, color) {
-            const min = parseFloat(slider.min);
-            const max = parseFloat(slider.max);
-            const val = parseFloat(slider.value);
+            if (!slider) return;
+            const min = parseFloat(slider.min) || 0;
+            const max = parseFloat(slider.max) || 10;
+            const val = parseFloat(slider.value) || min;
             const percent = ((val - min) / (max - min)) * 100;
             slider.style.background = `linear-gradient(to right, ${color} ${percent}%, #2d2e33 ${percent}%)`;
         }
@@ -707,7 +700,7 @@
             updateScoreDisplay();
         });
 
-        // ---------- Обновление отображения оценки ----------
+        // ---------- Обновление отображения оценки (основное окно) ----------
         function updateScoreDisplay() {
             if (currentMode === 'basic') {
                 const val = parseFloat(basicSlider.value);
@@ -736,7 +729,7 @@
                     scoreDisplay.classList.remove('gold');
                 }
                 extendedScore.textContent = score.toFixed(2);
-                const rank = getRank(score);
+                const rank = getExtRank(score);
                 extendedRank.textContent = `${rank.emoji} ${rank.label} фильм`;
                 baseSum.textContent = base.toFixed(1);
                 coefVisual.textContent = kVisual.toFixed(3);
@@ -748,6 +741,7 @@
                 valDisplays.visual.textContent = visual.toFixed(1);
                 valDisplays.sound.textContent = sound.toFixed(1);
                 valDisplays.relevance.textContent = relevance.toFixed(1);
+                // Обновляем стили всех расширенных слайдеров
                 updateSliderStyle(sliders.script, '#3a86ff');
                 updateSliderStyle(sliders.acting, '#3a86ff');
                 updateSliderStyle(sliders.directing, '#3a86ff');
@@ -757,7 +751,7 @@
             }
         }
 
-        // События слайдеров
+        // События слайдеров (основное окно)
         basicSlider.addEventListener('input', () => {
             const val = parseFloat(basicSlider.value);
             basicVal.textContent = val.toFixed(1);
@@ -854,13 +848,21 @@
                 return;
             }
             const coll = await loadCollection();
-            let score;
-            let mode = currentMode;
+
+            // Базовая оценка всегда сохраняется (из слайдера, который виден в текущем режиме)
+            let basicScore;
+            let extendedScoreVal = null;
             let slidersData = null;
-            let rank = null;
-            if (mode === 'basic') {
-                score = parseFloat(basicSlider.value);
+            let extRank = null;
+
+            if (currentMode === 'basic') {
+                basicScore = parseFloat(basicSlider.value);
+                // расширенной нет
             } else {
+                // В расширенном режиме базовую берём из слайдера базовой оценки (который показывается в расширенном режиме)
+                // У нас его нет в интерфейсе, поэтому будем использовать тот же basicSlider (он всегда доступен)
+                basicScore = parseFloat(basicSlider.value);
+                // Рассчитываем расширенную
                 const script = parseFloat(sliders.script.value);
                 const acting = parseFloat(sliders.acting.value);
                 const directing = parseFloat(sliders.directing.value);
@@ -871,21 +873,23 @@
                 const kVisual = getCoef(visual);
                 const kSound = getCoef(sound);
                 const kRelevance = getCoef(relevance);
-                score = Math.min(Math.round(base * kVisual * kSound * kRelevance * 100) / 100, 30);
-                rank = getRank(score).label;
+                extendedScoreVal = Math.min(Math.round(base * kVisual * kSound * kRelevance * 100) / 100, 30);
+                extRank = getExtRank(extendedScoreVal).label;
                 slidersData = { script, acting, directing, visual, sound, relevance };
             }
+
             const item = {
                 id: selectedFilm.id,
                 title: selectedFilm.title,
                 year: selectedFilm.year,
                 image: selectedFilm.image,
                 type: selectedFilm.isCartoon ? 'cartoon' : 'movie',
-                mode: mode,
-                score: score,
-                rank: rank,
-                sliders: slidersData
+                basicScore: basicScore,
+                extendedScore: extendedScoreVal,
+                sliders: slidersData,
+                extRank: extRank
             };
+
             if (coll.some(el => el.id === item.id)) {
                 tg.showAlert('Этот фильм уже есть в коллекции');
                 return;
@@ -911,13 +915,14 @@
             });
         });
 
-        // Функция определения класса ранга по базовой оценке (10-балльной)
-        function getRankClass(baseScore) {
-            if (baseScore >= 9) return 'rank-ruby';
-            else if (baseScore >= 7) return 'rank-sapphire';
-            else if (baseScore >= 5) return 'rank-emerald';
-            else if (baseScore >= 3) return 'rank-gold';
-            else return 'rank-silver';
+        // Определение класса фона по расширенной оценке (или нейтральный, если её нет)
+        function getRankClass(extScore) {
+            if (extScore === null || extScore === undefined) return 'rank-neutral';
+            if (extScore >= 24) return 'rank-ruby';
+            if (extScore >= 18) return 'rank-sapphire';
+            if (extScore >= 12) return 'rank-emerald';
+            if (extScore >= 6) return 'rank-gold';
+            return 'rank-silver';
         }
 
         async function renderCollection() {
@@ -930,18 +935,13 @@
             if (currentScoreFilter !== 'all') {
                 const filterVal = parseFloat(currentScoreFilter);
                 data = data.filter(item => {
-                    let baseScore;
-                    if (item.mode === 'basic') {
-                        baseScore = item.score;
-                    } else {
-                        baseScore = (item.score / 30) * 10;
-                    }
-                    return Math.round(baseScore) === filterVal;
+                    // Фильтр по базовой оценке (всегда есть)
+                    return Math.round(item.basicScore) === filterVal;
                 });
             }
 
-            if (sortMethod === 'highest') data.sort((a, b) => b.score - a.score);
-            else if (sortMethod === 'lowest') data.sort((a, b) => a.score - b.score);
+            if (sortMethod === 'highest') data.sort((a, b) => b.basicScore - a.basicScore);
+            else if (sortMethod === 'lowest') data.sort((a, b) => a.basicScore - b.basicScore);
             else data.sort((a, b) => b.id - a.id);
 
             collectionList.innerHTML = '';
@@ -950,17 +950,9 @@
                 return;
             }
             data.forEach(item => {
-                // Вычисляем базовую оценку (10-балльную)
-                let baseScore;
-                if (item.mode === 'basic') {
-                    baseScore = item.score;
-                } else {
-                    baseScore = (item.score / 30) * 10;
-                }
-                baseScore = Math.round(baseScore * 10) / 10;
-                const scoreDisplayStr = baseScore.toFixed(1) + '/10';
-
-                const rankClass = getRankClass(baseScore);
+                const basicScore = item.basicScore || 0;
+                const scoreDisplayStr = basicScore.toFixed(1) + '/10';
+                const rankClass = getRankClass(item.extendedScore);
 
                 const div = document.createElement('div');
                 div.className = `history-item ${rankClass}`;
@@ -1016,6 +1008,18 @@
                 modalExtendedSection.classList.add('active');
                 modalBasicSection.classList.remove('active');
             }
+            // Обновляем стили слайдеров в активной секции
+            if (mode === 'basic') {
+                updateSliderStyle(modalBasicSlider, '#3a86ff');
+            } else {
+                // Обновляем все расширенные слайдеры
+                const extIds = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
+                extIds.forEach(id => {
+                    const sl = document.getElementById(`modal-slider-${id}`);
+                    const color = (id === 'script' || id === 'acting' || id === 'directing') ? '#3a86ff' : '#8338ec';
+                    updateSliderStyle(sl, color);
+                });
+            }
         });
 
         // Обновление расширенной оценки в модалке
@@ -1033,7 +1037,7 @@
             let score = base * kVisual * kSound * kRelevance;
             score = Math.min(Math.round(score * 100) / 100, 30);
             document.getElementById('modal-extended-score').textContent = score.toFixed(2);
-            const rank = getRank(score);
+            const rank = getExtRank(score);
             document.getElementById('modal-extended-rank').textContent = `${rank.emoji} ${rank.label} фильм`;
             document.getElementById('modal-val-script').textContent = script.toFixed(1);
             document.getElementById('modal-val-acting').textContent = acting.toFixed(1);
@@ -1041,6 +1045,7 @@
             document.getElementById('modal-val-visual').textContent = visual.toFixed(1);
             document.getElementById('modal-val-sound').textContent = sound.toFixed(1);
             document.getElementById('modal-val-relevance').textContent = relevance.toFixed(1);
+            // Обновляем стили ползунков
             updateSliderStyle(document.getElementById('modal-slider-script'), '#3a86ff');
             updateSliderStyle(document.getElementById('modal-slider-acting'), '#3a86ff');
             updateSliderStyle(document.getElementById('modal-slider-directing'), '#3a86ff');
@@ -1066,18 +1071,13 @@
             };
 
             // Базовая оценка
-            let baseScore;
-            if (item.mode === 'basic') {
-                baseScore = item.score;
-            } else {
-                baseScore = (item.score / 30) * 10;
-            }
-            baseScore = Math.round(baseScore * 10) / 10;
-            modalBasicSlider.value = baseScore;
-            modalBasicVal.textContent = baseScore.toFixed(1);
+            const basicScore = item.basicScore || 0;
+            modalBasicSlider.value = basicScore;
+            modalBasicVal.textContent = basicScore.toFixed(1);
             updateSliderStyle(modalBasicSlider, '#3a86ff');
 
-            // Расширенные слайдеры
+            // Расширенная оценка (если есть)
+            const hasExtended = item.extendedScore !== null && item.extendedScore !== undefined;
             const sl = item.sliders || { script: 3, acting: 3, directing: 3, visual: 3, sound: 3, relevance: 3 };
             document.getElementById('modal-slider-script').value = sl.script;
             document.getElementById('modal-slider-acting').value = sl.acting;
@@ -1085,31 +1085,46 @@
             document.getElementById('modal-slider-visual').value = sl.visual;
             document.getElementById('modal-slider-sound').value = sl.sound;
             document.getElementById('modal-slider-relevance').value = sl.relevance;
-            updateModalExtendedScore();
-
-            // Активная вкладка
-            const activeMode = item.mode || 'basic';
-            modalModeToggle.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            const targetBtn = modalModeToggle.querySelector(`[data-modal-mode="${activeMode}"]`);
-            if (targetBtn) targetBtn.classList.add('active');
-            if (activeMode === 'basic') {
-                modalBasicSection.classList.add('active');
-                modalExtendedSection.classList.remove('active');
+            // Обновляем отображение расширенной оценки
+            if (hasExtended) {
+                updateModalExtendedScore();
             } else {
-                modalExtendedSection.classList.add('active');
-                modalBasicSection.classList.remove('active');
+                // Если расширенной нет, показываем прочерк или нейтральное сообщение
+                document.getElementById('modal-extended-score').textContent = '—';
+                document.getElementById('modal-extended-rank').textContent = 'Нет расширенной оценки';
+                // Сбрасываем стили слайдеров на нейтральные (серые)
+                const extIds = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
+                extIds.forEach(id => {
+                    const sl2 = document.getElementById(`modal-slider-${id}`);
+                    sl2.style.background = '#2d2e33';
+                });
             }
 
-            modalScore.textContent = baseScore.toFixed(1) + ' / 10';
+            // Активная вкладка – показываем ту, которая есть у фильма (но если есть только базовая, то по умолчанию базовая)
+            let activeMode = 'basic';
+            if (hasExtended) {
+                // Если есть расширенная, можно показать её, но по умолчанию оставим базовую
+                // Можно переключить на extended, если пользователь хочет, но мы оставим выбор за пользователем
+            }
+            // По умолчанию показываем базовую вкладку
+            modalModeToggle.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            const targetBtn = modalModeToggle.querySelector(`[data-modal-mode="basic"]`);
+            if (targetBtn) targetBtn.classList.add('active');
+            modalBasicSection.classList.add('active');
+            modalExtendedSection.classList.remove('active');
+
+            // Общий счёт – показываем базовую оценку
+            modalScore.textContent = basicScore.toFixed(1) + ' / 10';
             modalScore.className = 'modal-score';
 
-            // Фон модалки по рангу (используем те же цвета)
-            const rankClass = getRankClass(baseScore);
+            // Фон модалки по расширенной оценке (если есть, иначе нейтральный)
+            const rankClass = getRankClass(item.extendedScore);
             modalContent.className = 'modal-content ' + rankClass;
 
             modalEditBtn.style.display = 'block';
             modalSaveEditBtn.style.display = 'none';
             document.querySelector('.modal-content').classList.remove('edit-mode');
+            // Отключаем все слайдеры
             document.querySelectorAll('#modal-basic-section input, #modal-extended-section input').forEach(inp => inp.disabled = true);
             modalOverlay.classList.add('active');
         }
@@ -1124,7 +1139,9 @@
         modalEditBtn.addEventListener('click', function() {
             if (!currentModalItemId) return;
             isEditMode = true;
+            // Включаем все слайдеры
             document.querySelectorAll('#modal-basic-section input, #modal-extended-section input').forEach(inp => inp.disabled = false);
+            // Добавляем обработчики для расширенных слайдеров, если их нет
             const extSliders = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
             extSliders.forEach(id => {
                 const slider = document.getElementById(`modal-slider-${id}`);
@@ -1133,11 +1150,13 @@
                     slider._listener = true;
                 }
             });
+            // Обработчик для базового слайдера
             if (!modalBasicSlider._listener) {
                 modalBasicSlider.addEventListener('input', function() {
                     const val = parseFloat(this.value);
                     modalBasicVal.textContent = val.toFixed(1);
                     modalScore.textContent = val.toFixed(1) + ' / 10';
+                    updateSliderStyle(this, '#3a86ff');
                 });
                 modalBasicSlider._listener = true;
             }
@@ -1153,31 +1172,31 @@
             if (!item) return;
 
             // Сохраняем базовую оценку
-            const newBase = parseFloat(modalBasicSlider.value);
-            item.score = newBase;
+            item.basicScore = parseFloat(modalBasicSlider.value);
 
-            // Сохраняем расширенные слайдеры
-            const ids = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
-            const newSliders = {};
-            ids.forEach(id => {
-                const inp = document.getElementById(`modal-slider-${id}`);
-                newSliders[id] = parseFloat(inp.value);
-            });
-            item.sliders = newSliders;
-            // Пересчитываем расширенную оценку для информации
-            const base = newSliders.script + newSliders.acting + newSliders.directing;
-            const kVisual = getCoef(newSliders.visual);
-            const kSound = getCoef(newSliders.sound);
-            const kRelevance = getCoef(newSliders.relevance);
-            let extScore = base * kVisual * kSound * kRelevance;
-            extScore = Math.min(Math.round(extScore * 100) / 100, 30);
-            const rank = getRank(extScore);
-            item.rank = rank.label;
-
-            // Сохраняем выбранный режим (вкладка)
+            // Сохраняем расширенную, если пользователь её заполнил (проверяем, активна ли вкладка extended)
             const activeModeBtn = modalModeToggle.querySelector('.mode-btn.active');
-            if (activeModeBtn) {
-                item.mode = activeModeBtn.dataset.modalMode;
+            const mode = activeModeBtn ? activeModeBtn.dataset.modalMode : 'basic';
+            if (mode === 'extended') {
+                const ids = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
+                const newSliders = {};
+                ids.forEach(id => {
+                    const inp = document.getElementById(`modal-slider-${id}`);
+                    newSliders[id] = parseFloat(inp.value);
+                });
+                const base = newSliders.script + newSliders.acting + newSliders.directing;
+                const kVisual = getCoef(newSliders.visual);
+                const kSound = getCoef(newSliders.sound);
+                const kRelevance = getCoef(newSliders.relevance);
+                let extScore = base * kVisual * kSound * kRelevance;
+                extScore = Math.min(Math.round(extScore * 100) / 100, 30);
+                item.extendedScore = extScore;
+                item.sliders = newSliders;
+                item.extRank = getExtRank(extScore).label;
+            } else {
+                // Если переключились на базовую, можно оставить расширенную без изменений или удалить?
+                // По логике, пользователь может изменить базовую, а расширенная остаётся прежней.
+                // Ничего не делаем с расширенной.
             }
 
             await saveCollection(coll);
@@ -1188,15 +1207,9 @@
 
         // ---------- КНОПКА "ФИЛЬМЫ С ТАКОЙ ОЦЕНКОЙ" ----------
         document.getElementById('similar-btn').addEventListener('click', function() {
-            let baseScore;
-            if (currentMode === 'basic') {
-                baseScore = parseFloat(basicSlider.value);
-            } else {
-                const scoreText = totalScore.textContent;
-                const score = parseFloat(scoreText);
-                baseScore = (score / 30) * 10;
-            }
-            const rounded = Math.round(baseScore);
+            // Берём базовую оценку из слайдера (всегда доступен)
+            const basicScore = parseFloat(basicSlider.value);
+            const rounded = Math.round(basicScore);
             if (rounded < 1 || rounded > 10) {
                 tg.showAlert('Оценка вне допустимого диапазона (1–10)');
                 return;
@@ -1244,11 +1257,14 @@
         async function init() {
             await renderCollection();
             modeBasicBtn.click();
-            // Устанавливаем стили для всех ползунков при загрузке
+            // Принудительно обновляем стили всех слайдеров при загрузке
             document.querySelectorAll('input[type="range"]').forEach(sl => {
-                sl.addEventListener('input', function() {
-                    // стили обновляются в других функциях
-                });
+                // Для каждого слайдера определяем цвет по его id или по родительскому классу
+                let color = '#3a86ff';
+                if (sl.id.includes('visual') || sl.id.includes('sound') || sl.id.includes('relevance')) {
+                    color = '#8338ec';
+                }
+                updateSliderStyle(sl, color);
             });
         }
         init();
