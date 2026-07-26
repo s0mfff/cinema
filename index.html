@@ -7,7 +7,8 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== ОБНОВЛЁННЫЙ ДИЗАЙН ===== */
+        /* ===== ВСЕ СТИЛИ ОСТАЮТСЯ ТАКИМИ ЖЕ, КАК В ПРЕДЫДУЩЕЙ ВЕРСИИ ===== */
+        /* (я скопирую их полностью, чтобы не потерять) */
         :root {
             --bg-color: #0b0b0e;
             --card-bg: rgba(28, 30, 36, 0.7);
@@ -266,11 +267,11 @@
         }
         .score-display .total { display: inline-block; }
 
-        .btn-group { 
-            display: flex; 
-            gap: 8px; 
-            flex-wrap: wrap; 
-            align-items: center; 
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
             margin-left: auto;
         }
         .action-btn {
@@ -303,13 +304,18 @@
             gap: 10px;
             padding-bottom: 80px;
         }
-        #collection-filters {
+        #tab-users {
+            overflow: hidden;
+            gap: 10px;
+            padding-bottom: 80px;
+        }
+        #collection-filters, #user-filters {
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-        #collection-list-wrapper {
+        #collection-list-wrapper, #user-list-wrapper {
             flex: 1;
             overflow-y: auto;
             padding-bottom: 10px;
@@ -515,6 +521,104 @@
         }
         .mode-btn:disabled { opacity: 0.4; pointer-events: none; }
 
+        /* --- Модалка ника --- */
+        .nickname-modal .modal-content {
+            max-width: 400px;
+            text-align: center;
+        }
+        .nickname-modal .modal-content h2 {
+            margin-bottom: 10px;
+            color: var(--gold);
+        }
+        .nickname-modal .modal-content p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+        .nickname-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.2s;
+            margin-bottom: 12px;
+        }
+        .nickname-input:focus {
+            border-color: var(--blue-accent);
+        }
+        .nickname-error {
+            color: var(--red-accent);
+            font-size: 0.8rem;
+            margin-top: -8px;
+            margin-bottom: 8px;
+            display: none;
+        }
+
+        /* --- Список пользователей --- */
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            background: var(--glass-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .user-item:hover { background: rgba(255,255,255,0.05); }
+        .user-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--blue-accent), var(--purple-accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #fff;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+        .user-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            pointer-events: none;
+        }
+        .user-nickname {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .user-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .user-back-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            align-self: flex-start;
+        }
+        .user-back-btn:hover { background: rgba(255,255,255,0.08); }
+
+        /* --- Модалка --- */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -738,7 +842,7 @@
         </div>
     </div>
 
-    <!-- ======== ВКЛАДКА 2: КОЛЛЕКЦИЯ ======== -->
+    <!-- ======== ВКЛАДКА 2: МОЯ КОЛЛЕКЦИЯ ======== -->
     <div id="tab-collection" class="tab-content">
         <div id="collection-filters">
             <div class="collection-controls">
@@ -788,10 +892,21 @@
         </div>
     </div>
 
+    <!-- ======== ВКЛАДКА 3: ПОЛЬЗОВАТЕЛИ ======== -->
+    <div id="tab-users" class="tab-content">
+        <div id="user-filters">
+            <!-- Здесь будет контейнер для списка пользователей или чужой коллекции -->
+        </div>
+        <div id="user-list-wrapper">
+            <div id="user-list" class="history-list"></div>
+        </div>
+    </div>
+
     <!-- ======== НИЖНЕЕ МЕНЮ ======== -->
     <div class="bottom-nav">
         <button class="nav-btn active" data-tab="rating">⭐ Оценка</button>
         <button class="nav-btn" data-tab="collection">📚 Моя коллекция</button>
+        <button class="nav-btn" data-tab="users">👥 Пользователи</button>
     </div>
 
     <!-- ======== МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ ======== -->
@@ -890,9 +1005,20 @@
         </div>
     </div>
 
+    <!-- ======== МОДАЛЬНОЕ ОКНО ДЛЯ ВВОДА НИКА ======== -->
+    <div id="nickname-modal" class="modal-overlay nickname-modal">
+        <div class="modal-content">
+            <h2>👋 Добро пожаловать!</h2>
+            <p>Придумайте уникальный ник, который будет виден другим пользователям.</p>
+            <input type="text" id="nickname-input" class="nickname-input" placeholder="Ваш ник..." maxlength="30" />
+            <div id="nickname-error" class="nickname-error">Ник уже занят или содержит недопустимые символы</div>
+            <button class="action-btn save-btn" id="nickname-save-btn" style="width:100%;">Сохранить ник</button>
+        </div>
+    </div>
+
     <script>
         /* ==========================================================
-           ВСЯ ЛОГИКА ПРИЛОЖЕНИЯ
+           ПОЛНАЯ ЛОГИКА С ПОДДЕРЖКОЙ ПОЛЬЗОВАТЕЛЕЙ
            ========================================================== */
         const tg = window.Telegram.WebApp;
         tg.ready();
@@ -900,11 +1026,11 @@
 
         // ---------- ПОДКЛЮЧЕНИЕ SUPABASE ----------
         const SUPABASE_URL = 'https://vrnqcyywpyzilhowbasv.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZybnFjeXl3cHl6aWxob3diYXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNTU5MzIsImV4cCI6MjEwMDYzMTkzMn0.oYMUAspcrdqlZ4Mx9xu-slBYKPGnDSM4FiwH1K6fZxM'; // 👈 ВСТАВЬТЕ ВАШ КЛЮЧ СЮДА!
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZybnFjeXl3cHl6aWxob3diYXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNTU5MzIsImV4cCI6MjEwMDYzMTkzMn0.oYMUAspcrdqlZ4Mx9xu-slBYKPGnDSM4FiwH1K6fZxM';
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ---------- Хранилище ----------
+        // ---------- ХРАНИЛИЩЕ (локальное + облачное) ----------
         const STORAGE_KEY = 'rzt_cinema_history_v2';
 
         function cloudGet(key) {
@@ -923,123 +1049,132 @@
             });
         }
 
-        async function loadCollection() {
-            const user = tg.initDataUnsafe?.user;
-            if (!user) {
-                try {
-                    const data = await cloudGet(STORAGE_KEY);
-                    return data ? JSON.parse(data) : [];
-                } catch { return []; }
-            }
+        // ---------- ПОЛЬЗОВАТЕЛИ ----------
+        const user = tg.initDataUnsafe?.user;
+        const USER_ID = user ? user.id : 0;
+        let currentViewUserId = USER_ID; // чей профиль сейчас смотрим (по умолчанию свой)
+        let userNicknames = {};          // кэш { user_id: nickname }
 
-            try {
-                const { data, error } = await supabaseClient
-                    .from('user_movies')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .order('created_at', { ascending: false });
-
-                if (error || !data) {
-                    console.error('Ошибка Supabase, грузим локально:', error);
-                    const localData = await cloudGet(STORAGE_KEY);
-                    return localData ? JSON.parse(localData) : [];
-                }
-
-                return data.map(item => ({
-                    id: item.movie_id,
-                    title: item.title,
-                    year: item.year,
-                    image: item.image,
-                    type: item.type,
-                    basicScore: Number(item.basic_score),
-                    extendedScore: item.extended_score ? Number(item.extended_score) : null,
-                    sliders: item.sliders,
-                    extRank: item.ext_rank,
-                    country: item.country,
-                    genres: item.genres
-                }));
-            } catch (err) {
-                console.error('Ошибка:', err);
-                const data = await cloudGet(STORAGE_KEY);
-                return data ? JSON.parse(data) : [];
-            }
+        // ---------- ФУНКЦИИ РАБОТЫ С БАЗОЙ ----------
+        async function getUserNickname(userId) {
+            if (userNicknames[userId]) return userNicknames[userId];
+            const { data, error } = await supabaseClient
+                .from('users')
+                .select('nickname')
+                .eq('user_id', userId)
+                .maybeSingle();
+            if (error || !data) return null;
+            userNicknames[userId] = data.nickname;
+            return data.nickname;
         }
 
-        async function saveCollection(collection) {
-            await cloudSet(STORAGE_KEY, JSON.stringify(collection));
-
-            const user = tg.initDataUnsafe?.user;
-            if (user && collection.length > 0) {
-                const item = collection[collection.length - 1];
-
-                const { error } = await supabaseClient
-                    .from('user_movies')
-                    .upsert({
-                        user_id: user.id,
-                        movie_id: item.id,
-                        title: item.title,
-                        year: item.year,
-                        image: item.image,
-                        type: item.type,
-                        basic_score: item.basicScore,
-                        extended_score: item.extendedScore,
-                        sliders: item.sliders,
-                        ext_rank: item.extRank,
-                        country: item.country,
-                        genres: item.genres
-                    }, { onConflict: 'user_id, movie_id' });
-
-                if (error) {
-                    console.error('Ошибка сохранения в Supabase:', error);
-                } else {
-                    console.log('Фильм сохранен в Supabase!');
-                }
+        async function setUserNickname(userId, nickname) {
+            // Проверяем, занят ли ник
+            const { data, error } = await supabaseClient
+                .from('users')
+                .select('user_id')
+                .eq('nickname', nickname)
+                .maybeSingle();
+            if (error) {
+                console.error('Ошибка проверки ника:', error);
+                return { success: false, error: 'Ошибка проверки' };
             }
-            renderCollection();
+            if (data) {
+                return { success: false, error: 'Занят' };
+            }
+
+            // Сохраняем ник
+            const { error: upsertError } = await supabaseClient
+                .from('users')
+                .upsert({ user_id: userId, nickname: nickname }, { onConflict: 'user_id' });
+            if (upsertError) {
+                console.error('Ошибка сохранения ника:', upsertError);
+                return { success: false, error: 'Ошибка сохранения' };
+            }
+            userNicknames[userId] = nickname;
+            return { success: true };
         }
 
-        // ---------- API Кинопоиска ----------
-        const KP_API_KEY = 'ee7d5979-e5d4-4387-854f-46f5f109036f';
+        async function loadAllUsers() {
+            // Загружаем всех пользователей, у которых есть хотя бы одна оценка
+            const { data: ratings, error: rErr } = await supabaseClient
+                .from('user_movies')
+                .select('user_id');
+            if (rErr || !ratings) return [];
 
-        async function searchKinopoisk(query) {
-            const url = `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}&page=1`;
-            const resp = await fetch(url, {
-                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
+            const userIds = [...new Set(ratings.map(r => r.user_id))];
+            if (userIds.length === 0) return [];
+
+            // Получаем ники
+            const { data: usersData, error: uErr } = await supabaseClient
+                .from('users')
+                .select('user_id, nickname')
+                .in('user_id', userIds);
+            if (uErr) return [];
+
+            const result = usersData.map(u => {
+                const count = ratings.filter(r => r.user_id === u.user_id).length;
+                return { user_id: u.user_id, nickname: u.nickname, count: count };
             });
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const data = await resp.json();
-            return data.films.map(f => ({
-                id: f.filmId,
-                title: f.nameRu || f.nameEn || f.nameOriginal || 'Без названия',
-                year: f.year || 'Неизвестно',
-                image: f.posterUrlPreview || '',
-                rating: f.rating || 0,
+            // Сортируем по количеству оценок (по убыванию)
+            result.sort((a, b) => b.count - a.count);
+            return result;
+        }
+
+        // ---------- ЗАГРУЗКА КОЛЛЕКЦИИ ПОЛЬЗОВАТЕЛЯ ----------
+        async function loadUserMovies(userId) {
+            const { data, error } = await supabaseClient
+                .from('user_movies')
+                .select('*')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+            if (error) {
+                console.error('Ошибка загрузки фильмов пользователя:', error);
+                return [];
+            }
+            return data.map(item => ({
+                id: item.movie_id,
+                title: item.title,
+                year: item.year,
+                image: item.image,
+                type: item.type,
+                basicScore: Number(item.basic_score),
+                extendedScore: item.extended_score ? Number(item.extended_score) : null,
+                sliders: item.sliders,
+                extRank: item.ext_rank,
+                country: item.country,
+                genres: item.genres,
+                created_at: item.created_at
             }));
         }
 
-        async function getFilmDetails(filmId) {
-            const url = `https://kinopoiskapiunofficial.tech/api/v2.2/films/${filmId}`;
-            const resp = await fetch(url, {
-                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
-            });
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const data = await resp.json();
-            const genres = data.genres || [];
-            const isCartoon = genres.some(g => g.genre.includes('мультфильм') || g.genre.includes('анимация'));
-            let country = 'Неизвестно';
-            if (data.countries && data.countries.length > 0) {
-                country = data.countries.map(c => c.country).join(', ');
-            }
-            return {
-                genres: genres.map(g => g.genre).join(', '),
-                isCartoon: isCartoon,
-                year: data.year || 'Неизвестно',
-                poster: data.posterUrl || '',
-                country: country,
-            };
+        // ---------- РАНГИ И ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
+        const extRanks = [
+            { min: 0.34, max: 5.99, label: 'Серебряный', emoji: '🥈' },
+            { min: 6, max: 11.99, label: 'Золотой', emoji: '🥇' },
+            { min: 12, max: 17.99, label: 'Изумрудный', emoji: '💎' },
+            { min: 18, max: 23.99, label: 'Сапфировый', emoji: '🔷' },
+            { min: 24, max: 30, label: 'Рубиновый', emoji: '🔴' }
+        ];
+
+        function getExtRank(score) {
+            for (let r of extRanks) if (score >= r.min && score <= r.max) return r;
+            return extRanks[0];
         }
 
-        // ---------- Основные переменные ----------
+        function getCoef(val) { return 0.80 + (val - 1) * 0.115; }
+
+        function getRankClass(item) {
+            if (item.type === 'cartoon') return 'rank-cartoon';
+            if (item.extendedScore === null || item.extendedScore === undefined) return 'rank-neutral';
+            if (item.extendedScore >= 24) return 'rank-ruby';
+            if (item.extendedScore >= 18) return 'rank-sapphire';
+            if (item.extendedScore >= 12) return 'rank-emerald';
+            if (item.extendedScore >= 6) return 'rank-gold';
+            return 'rank-silver';
+        }
+
+        // ---------- ОСНОВНЫЕ ПЕРЕМЕННЫЕ ----------
         let selectedFilm = null;
         let currentMode = 'basic';
         let currentScoreFilter = 'all';
@@ -1090,22 +1225,6 @@
         const scoreDisplay = document.getElementById('score-display');
         const totalScore = document.getElementById('total-score');
 
-        // Ранги
-        const extRanks = [
-            { min: 0.34, max: 5.99, label: 'Серебряный', emoji: '🥈' },
-            { min: 6, max: 11.99, label: 'Золотой', emoji: '🥇' },
-            { min: 12, max: 17.99, label: 'Изумрудный', emoji: '💎' },
-            { min: 18, max: 23.99, label: 'Сапфировый', emoji: '🔷' },
-            { min: 24, max: 30, label: 'Рубиновый', emoji: '🔴' }
-        ];
-
-        function getExtRank(score) {
-            for (let r of extRanks) if (score >= r.min && score <= r.max) return r;
-            return extRanks[0];
-        }
-
-        function getCoef(val) { return 0.80 + (val - 1) * 0.115; }
-
         function updateSliderStyle(slider, color) {
             if (!slider) return;
             const min = parseFloat(slider.min) || 0;
@@ -1115,7 +1234,7 @@
             slider.style.background = `linear-gradient(to right, ${color} ${percent}%, rgba(255,255,255,0.08) ${percent}%)`;
         }
 
-        // ---------- Переключение режимов ----------
+        // ---------- ПЕРЕКЛЮЧЕНИЕ РЕЖИМОВ ----------
         modeBasicBtn.addEventListener('click', function() {
             if (selectedFilm && selectedFilm.isCartoon) {
                 tg.showAlert('Для мультфильмов доступна только базовая оценка');
@@ -1204,6 +1323,47 @@
             sl.addEventListener('input', updateScoreDisplay);
         });
 
+        // ---------- API Кинопоиска ----------
+        const KP_API_KEY = 'ee7d5979-e5d4-4387-854f-46f5f109036f';
+
+        async function searchKinopoisk(query) {
+            const url = `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}&page=1`;
+            const resp = await fetch(url, {
+                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            return data.films.map(f => ({
+                id: f.filmId,
+                title: f.nameRu || f.nameEn || f.nameOriginal || 'Без названия',
+                year: f.year || 'Неизвестно',
+                image: f.posterUrlPreview || '',
+                rating: f.rating || 0,
+            }));
+        }
+
+        async function getFilmDetails(filmId) {
+            const url = `https://kinopoiskapiunofficial.tech/api/v2.2/films/${filmId}`;
+            const resp = await fetch(url, {
+                headers: { 'X-API-KEY': KP_API_KEY, 'Content-Type': 'application/json' }
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            const genres = data.genres || [];
+            const isCartoon = genres.some(g => g.genre.includes('мультфильм') || g.genre.includes('анимация'));
+            let country = 'Неизвестно';
+            if (data.countries && data.countries.length > 0) {
+                country = data.countries.map(c => c.country).join(', ');
+            }
+            return {
+                genres: genres.map(g => g.genre).join(', '),
+                isCartoon: isCartoon,
+                year: data.year || 'Неизвестно',
+                poster: data.posterUrl || '',
+                country: country,
+            };
+        }
+
         // ---------- ПОИСК ----------
         let searchTimeout = null;
         searchInput.addEventListener('input', () => {
@@ -1286,23 +1446,23 @@
             updateScoreDisplay();
         }
 
-        // ---------- СОХРАНЕНИЕ ----------
+        // ---------- СОХРАНЕНИЕ ОЦЕНКИ (ТОЛЬКО ДЛЯ СВОЕГО ПРОФИЛЯ) ----------
         document.getElementById('save-btn').addEventListener('click', async () => {
             if (!selectedFilm) {
                 tg.showAlert('Сначала найдите и выберите фильм');
                 return;
             }
-            const coll = await loadCollection();
+            if (currentViewUserId !== USER_ID) {
+                tg.showAlert('Вы не можете сохранять оценки в чужом профиле');
+                return;
+            }
 
-            let basicScore;
+            let basicScore = parseFloat(basicSlider.value);
             let extendedScoreVal = null;
             let slidersData = null;
             let extRank = null;
 
-            if (currentMode === 'basic') {
-                basicScore = parseFloat(basicSlider.value);
-            } else {
-                basicScore = parseFloat(basicSlider.value);
+            if (currentMode === 'extended' && !selectedFilm.isCartoon) {
                 const script = parseFloat(sliders.script.value);
                 const acting = parseFloat(sliders.acting.value);
                 const directing = parseFloat(sliders.directing.value);
@@ -1324,31 +1484,46 @@
                 extRank = null;
             }
 
-            const item = {
-                id: selectedFilm.id,
+            // Проверяем, есть ли уже такой фильм у пользователя
+            const { data: existing, error: existErr } = await supabaseClient
+                .from('user_movies')
+                .select('movie_id')
+                .eq('user_id', USER_ID)
+                .eq('movie_id', selectedFilm.id)
+                .maybeSingle();
+            if (existing) {
+                tg.showAlert('Этот фильм уже есть в вашей коллекции');
+                return;
+            }
+
+            const payload = {
+                user_id: USER_ID,
+                movie_id: selectedFilm.id,
                 title: selectedFilm.title,
                 year: selectedFilm.year,
                 image: selectedFilm.image,
                 type: selectedFilm.isCartoon ? 'cartoon' : 'movie',
-                basicScore: basicScore,
-                extendedScore: extendedScoreVal,
+                basic_score: basicScore,
+                extended_score: extendedScoreVal,
                 sliders: slidersData,
-                extRank: extRank,
+                ext_rank: extRank,
                 country: selectedFilm.country || 'Неизвестно',
-                genres: selectedFilm.genres || '—',
+                genres: selectedFilm.genres || '—'
             };
 
-            if (coll.some(el => el.id === item.id)) {
-                tg.showAlert('Этот фильм уже есть в коллекции');
+            const { error } = await supabaseClient
+                .from('user_movies')
+                .insert(payload);
+            if (error) {
+                console.error('Ошибка сохранения оценки:', error);
+                tg.showAlert('Ошибка сохранения: ' + error.message);
                 return;
             }
-            coll.push(item);
-            await saveCollection(coll);
             tg.showAlert('Оценка сохранена!');
-            renderCollection();
+            renderCollection(); // обновляем свою коллекцию
         });
 
-        // ---------- КОЛЛЕКЦИЯ ----------
+        // ---------- КОЛЛЕКЦИЯ (универсальная) ----------
         const collectionSearch = document.getElementById('collection-search');
         const collectionSort = document.getElementById('collection-sort');
         const collectionList = document.getElementById('collection-list');
@@ -1362,9 +1537,7 @@
             const rightBtn = document.getElementById(rightBtnId);
             if (!wrapper || !container || !leftBtn || !rightBtn) return;
 
-            const step = () => {
-                return container.clientWidth * 0.8;
-            };
+            const step = () => container.clientWidth * 0.8;
 
             leftBtn.addEventListener('click', () => {
                 container.scrollBy({ left: -step(), behavior: 'smooth' });
@@ -1397,7 +1570,7 @@
                 filterButtons.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentScoreFilter = this.dataset.score;
-                renderCollection();
+                renderCollection(currentViewUserId);
                 const container = document.getElementById('scoreFilterScroll');
                 const btnRect = this.getBoundingClientRect();
                 const containerRect = container.getBoundingClientRect();
@@ -1411,7 +1584,7 @@
                 statusFilterButtons.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentStatusFilter = this.dataset.status;
-                renderCollection();
+                renderCollection(currentViewUserId);
                 const container = document.getElementById('statusFilterScroll');
                 const btnRect = this.getBoundingClientRect();
                 const containerRect = container.getBoundingClientRect();
@@ -1420,28 +1593,17 @@
             });
         });
 
-        function getRankClass(item) {
-            if (item.type === 'cartoon') return 'rank-cartoon';
-            if (item.extendedScore === null || item.extendedScore === undefined) return 'rank-neutral';
-            if (item.extendedScore >= 24) return 'rank-ruby';
-            if (item.extendedScore >= 18) return 'rank-sapphire';
-            if (item.extendedScore >= 12) return 'rank-emerald';
-            if (item.extendedScore >= 6) return 'rank-gold';
-            return 'rank-silver';
-        }
-
-        async function renderCollection() {
+        async function renderCollection(userId = USER_ID) {
             const query = collectionSearch.value.toLowerCase();
             const sortMethod = collectionSort.value;
-            let data = await loadCollection();
+
+            let data = await loadUserMovies(userId);
 
             if (query) data = data.filter(item => item.title.toLowerCase().includes(query));
-
             if (currentScoreFilter !== 'all') {
                 const filterVal = parseFloat(currentScoreFilter);
                 data = data.filter(item => Math.round(item.basicScore) === filterVal);
             }
-
             if (currentStatusFilter !== 'all') {
                 if (currentStatusFilter === 'Мультфильмы') {
                     data = data.filter(item => item.type === 'cartoon');
@@ -1456,12 +1618,13 @@
 
             collectionList.innerHTML = '';
             if (data.length === 0) {
-                collectionList.innerHTML = '<div class="empty-text">📭 Ничего не найдено</div>';
+                collectionList.innerHTML = `<div class="empty-text">📭 У этого пользователя пока нет фильмов</div>`;
                 return;
             }
+
+            const isOwn = (userId === USER_ID);
             data.forEach(item => {
-                const basicScore = item.basicScore || 0;
-                const scoreDisplayStr = basicScore.toFixed(1) + '/10';
+                const scoreStr = item.basicScore.toFixed(1) + '/10';
                 const rankClass = getRankClass(item);
 
                 const div = document.createElement('div');
@@ -1476,20 +1639,91 @@
                         </div>
                     </div>
                     <div class="history-item-right">
-                        <div class="history-item-score">${scoreDisplayStr}</div>
+                        <div class="history-item-score">${scoreStr}</div>
                     </div>
                 `;
                 div.addEventListener('click', () => {
-                    openModal(item.id);
+                    openModal(item.id, userId);
                 });
                 collectionList.appendChild(div);
             });
         }
 
-        collectionSearch.addEventListener('input', renderCollection);
-        collectionSort.addEventListener('change', renderCollection);
+        collectionSearch.addEventListener('input', () => renderCollection(currentViewUserId));
+        collectionSort.addEventListener('change', () => renderCollection(currentViewUserId));
 
-        // ---------- МОДАЛЬНОЕ ОКНО ----------
+        // ---------- ВКЛАДКА "ПОЛЬЗОВАТЕЛИ" ----------
+        const userListWrapper = document.getElementById('user-list-wrapper');
+        const userList = document.getElementById('user-list');
+        const userFilters = document.getElementById('user-filters');
+
+        let isUserListVisible = true; // показываем список пользователей или чужую коллекцию?
+
+        async function renderUserList() {
+            const users = await loadAllUsers();
+            userList.innerHTML = '';
+            if (users.length === 0) {
+                userList.innerHTML = '<div class="empty-text">Пока нет других пользователей с оценками</div>';
+                return;
+            }
+            users.forEach(u => {
+                const initial = (u.nickname || 'U')[0].toUpperCase();
+                const div = document.createElement('div');
+                div.className = 'user-item';
+                div.innerHTML = `
+                    <div class="user-avatar">${initial}</div>
+                    <div class="user-info">
+                        <div class="user-nickname">${u.nickname || 'Аноним'}</div>
+                        <div class="user-meta">🎬 ${u.count} оценок</div>
+                    </div>
+                `;
+                div.addEventListener('click', () => {
+                    showUserCollection(u.user_id);
+                });
+                userList.appendChild(div);
+            });
+        }
+
+        function showUserCollection(userId) {
+            currentViewUserId = userId;
+            isUserListVisible = false;
+            // Скрываем список, показываем коллекцию
+            userList.innerHTML = '';
+            userFilters.innerHTML = `
+                <button class="user-back-btn" id="user-back-btn">← Назад к списку</button>
+                <div style="margin-top:4px; color:var(--text-muted); font-size:0.9rem;">
+                    👤 Коллекция пользователя <span style="color:var(--blue-accent);" id="viewed-user-nickname">...</span>
+                </div>
+            `;
+            document.getElementById('user-back-btn').addEventListener('click', () => {
+                showUserList();
+            });
+            // Загружаем ник пользователя
+            (async () => {
+                const nickname = await getUserNickname(userId);
+                const el = document.getElementById('viewed-user-nickname');
+                if (el) el.textContent = nickname || 'Аноним';
+            })();
+            // Подключаем те же фильтры, что и в коллекции (переиспользуем их)
+            // Но они уже есть в DOM, просто привяжем к рендеру
+            renderCollection(userId);
+        }
+
+        function showUserList() {
+            isUserListVisible = true;
+            currentViewUserId = USER_ID;
+            userFilters.innerHTML = '';
+            renderUserList();
+            // Сбрасываем фильтры на свои
+            currentScoreFilter = 'all';
+            currentStatusFilter = 'all';
+            document.querySelectorAll('#scoreFilterScroll .filter-btn, #statusFilterScroll .filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('#scoreFilterScroll .filter-btn[data-score="all"]')?.classList.add('active');
+            document.querySelector('#statusFilterScroll .filter-btn[data-status="all"]')?.classList.add('active');
+            renderCollection(USER_ID);
+        }
+
+        // ---------- МОДАЛЬНОЕ ОКНО (с поддержкой просмотра чужих) ----------
         const modalOverlay = document.getElementById('modal-overlay');
         const modalClose = document.getElementById('modal-close-btn');
         const modalEditBtn = document.getElementById('modal-edit-btn');
@@ -1506,21 +1740,20 @@
         const modalCountry = document.getElementById('modal-country');
 
         let currentModalItemId = null;
+        let currentModalUserId = null;
         let isEditMode = false;
         let _cachedModalItem = null;
 
-        async function getCurrentModalItem() {
-            if (!currentModalItemId) return null;
-            const coll = await loadCollection();
-            return coll.find(el => el.id === currentModalItemId) || null;
+        async function getModalItem(filmId, userId) {
+            const data = await loadUserMovies(userId);
+            return data.find(item => item.id === filmId) || null;
         }
-        function getCurrentModalItemSync() { return _cachedModalItem; }
 
         modalModeToggle.addEventListener('click', function(e) {
             const btn = e.target.closest('.mode-btn');
             if (!btn) return;
             if (btn.classList.contains('active')) return;
-            const item = getCurrentModalItemSync();
+            const item = _cachedModalItem;
             if (item && item.type === 'cartoon') {
                 tg.showAlert('Для мультфильмов расширенная оценка недоступна');
                 return;
@@ -1579,13 +1812,14 @@
             updateSliderStyle(document.getElementById('modal-slider-relevance'), '#a855f7');
         }
 
-        async function openModal(id) {
-            const coll = await loadCollection();
-            const item = coll.find(el => el.id === id);
+        async function openModal(filmId, userId) {
+            const item = await getModalItem(filmId, userId);
             if (!item) return;
-            currentModalItemId = id;
+            currentModalItemId = filmId;
+            currentModalUserId = userId;
             _cachedModalItem = item;
             isEditMode = false;
+            const isOwn = (userId === USER_ID);
 
             document.getElementById('modal-img').src = item.image || 'https://via.placeholder.com/60';
             document.getElementById('modal-title').textContent = item.title;
@@ -1647,10 +1881,19 @@
             let rankClass = getRankClass(item);
             modalContent.className = 'modal-content ' + rankClass;
 
-            modalEditBtn.style.display = 'block';
-            modalSaveEditBtn.style.display = 'none';
-            document.querySelector('.modal-content').classList.remove('edit-mode');
-            document.querySelectorAll('#modal-basic-section input, #modal-extended-section input').forEach(inp => inp.disabled = true);
+            // Если это не свой профиль – скрываем кнопку редактирования
+            if (!isOwn) {
+                modalEditBtn.style.display = 'none';
+                modalSaveEditBtn.style.display = 'none';
+                document.querySelector('.modal-content').classList.remove('edit-mode');
+                document.querySelectorAll('#modal-basic-section input, #modal-extended-section input').forEach(inp => inp.disabled = true);
+            } else {
+                modalEditBtn.style.display = 'block';
+                modalSaveEditBtn.style.display = 'none';
+                document.querySelector('.modal-content').classList.remove('edit-mode');
+                document.querySelectorAll('#modal-basic-section input, #modal-extended-section input').forEach(inp => inp.disabled = true);
+            }
+
             modalOverlay.classList.add('active');
         }
 
@@ -1661,8 +1904,9 @@
             if (e.target === modalOverlay) modalOverlay.classList.remove('active');
         });
 
+        // ---------- РЕДАКТИРОВАНИЕ СВОЕЙ ОЦЕНКИ ----------
         modalEditBtn.addEventListener('click', function() {
-            if (!currentModalItemId) return;
+            if (!currentModalItemId || currentModalUserId !== USER_ID) return;
             const item = _cachedModalItem;
             if (item && item.type === 'cartoon') {
                 document.querySelectorAll('#modal-basic-section input').forEach(inp => inp.disabled = false);
@@ -1711,40 +1955,50 @@
         });
 
         modalSaveEditBtn.addEventListener('click', async function() {
-            if (!currentModalItemId) return;
-            const coll = await loadCollection();
-            const item = coll.find(el => el.id === currentModalItemId);
-            if (!item) return;
+            if (!currentModalItemId || currentModalUserId !== USER_ID) return;
 
-            item.basicScore = parseFloat(modalBasicSlider.value);
-
-            const isCartoon = item.type === 'cartoon';
-            if (!isCartoon) {
-                const activeModeBtn = modalModeToggle.querySelector('.mode-btn.active');
-                const mode = activeModeBtn ? activeModeBtn.dataset.modalMode : 'basic';
-                if (mode === 'extended') {
-                    const ids = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
-                    const newSliders = {};
-                    ids.forEach(id => {
-                        const inp = document.getElementById(`modal-slider-${id}`);
-                        newSliders[id] = parseFloat(inp.value);
-                    });
-                    const base = newSliders.script + newSliders.acting + newSliders.directing;
-                    const kVisual = getCoef(newSliders.visual);
-                    const kSound = getCoef(newSliders.sound);
-                    const kRelevance = getCoef(newSliders.relevance);
-                    let extScore = base * kVisual * kSound * kRelevance;
-                    extScore = Math.min(Math.round(extScore * 100) / 100, 30);
-                    item.extendedScore = extScore;
-                    item.sliders = newSliders;
-                    item.extRank = getExtRank(extScore).label;
-                }
+            const newBasic = parseFloat(modalBasicSlider.value);
+            let newExtended = null;
+            let newSliders = null;
+            const activeModeBtn = modalModeToggle.querySelector('.mode-btn.active');
+            const mode = activeModeBtn ? activeModeBtn.dataset.modalMode : 'basic';
+            if (mode === 'extended') {
+                const ids = ['script', 'acting', 'directing', 'visual', 'sound', 'relevance'];
+                const vals = {};
+                ids.forEach(id => {
+                    const inp = document.getElementById(`modal-slider-${id}`);
+                    vals[id] = parseFloat(inp.value);
+                });
+                const base = vals.script + vals.acting + vals.directing;
+                const kVisual = getCoef(vals.visual);
+                const kSound = getCoef(vals.sound);
+                const kRelevance = getCoef(vals.relevance);
+                let score = base * kVisual * kSound * kRelevance;
+                score = Math.min(Math.round(score * 100) / 100, 30);
+                newExtended = score;
+                newSliders = vals;
             }
 
-            await saveCollection(coll);
-            await openModal(currentModalItemId);
+            // Обновляем в БД
+            const { error } = await supabaseClient
+                .from('user_movies')
+                .update({
+                    basic_score: newBasic,
+                    extended_score: newExtended,
+                    sliders: newSliders,
+                    ext_rank: newExtended ? getExtRank(newExtended).label : null
+                })
+                .eq('user_id', USER_ID)
+                .eq('movie_id', currentModalItemId);
+
+            if (error) {
+                console.error('Ошибка обновления:', error);
+                tg.showAlert('Ошибка: ' + error.message);
+                return;
+            }
             tg.showAlert('Оценка обновлена!');
-            renderCollection();
+            await renderCollection(USER_ID);
+            await openModal(currentModalItemId, USER_ID);
         });
 
         // ---------- КНОПКА "ФИЛЬМЫ С ТАКОЙ ОЦЕНКОЙ" ----------
@@ -1790,15 +2044,71 @@
                 const tab = this.dataset.tab;
                 document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
                 document.getElementById('tab-' + tab).classList.add('active');
-                if (tab === 'collection') renderCollection();
+                if (tab === 'collection') {
+                    currentViewUserId = USER_ID;
+                    renderCollection(USER_ID);
+                } else if (tab === 'users') {
+                    showUserList();
+                }
             });
         });
 
+        // ---------- МОДАЛКА НИКА ----------
+        const nicknameModal = document.getElementById('nickname-modal');
+        const nicknameInput = document.getElementById('nickname-input');
+        const nicknameError = document.getElementById('nickname-error');
+        const nicknameSaveBtn = document.getElementById('nickname-save-btn');
+
+        async function checkAndPromptNickname() {
+            if (!USER_ID) return;
+            const nickname = await getUserNickname(USER_ID);
+            if (nickname) return;
+
+            // Показываем модалку
+            nicknameModal.classList.add('active');
+            nicknameInput.value = '';
+            nicknameError.style.display = 'none';
+            nicknameInput.focus();
+
+            return new Promise((resolve) => {
+                nicknameSaveBtn.onclick = async () => {
+                    const val = nicknameInput.value.trim();
+                    if (!val || val.length < 2) {
+                        nicknameError.textContent = 'Минимум 2 символа';
+                        nicknameError.style.display = 'block';
+                        return;
+                    }
+                    if (!/^[a-zA-Zа-яА-Я0-9_\-]+$/.test(val)) {
+                        nicknameError.textContent = 'Только буквы, цифры, _ и -';
+                        nicknameError.style.display = 'block';
+                        return;
+                    }
+                    const result = await setUserNickname(USER_ID, val);
+                    if (!result.success) {
+                        if (result.error === 'Занят') {
+                            nicknameError.textContent = 'Этот ник уже занят, придумайте другой';
+                        } else {
+                            nicknameError.textContent = 'Ошибка сохранения, попробуйте позже';
+                        }
+                        nicknameError.style.display = 'block';
+                        return;
+                    }
+                    nicknameModal.classList.remove('active');
+                    resolve();
+                };
+            });
+        }
+
         // ---------- ИНИЦИАЛИЗАЦИЯ ----------
         async function init() {
+            // Проверяем ник
+            await checkAndPromptNickname();
+
+            // Загружаем коллекцию текущего пользователя
+            currentViewUserId = USER_ID;
             currentScoreFilter = 'all';
             currentStatusFilter = 'all';
-            await renderCollection();
+            await renderCollection(USER_ID);
             modeBasicBtn.click();
             document.querySelectorAll('input[type="range"]').forEach(sl => {
                 let color = '#5b8cff';
@@ -1807,7 +2117,12 @@
                 }
                 updateSliderStyle(sl, color);
             });
+
+            // Предзагружаем список пользователей (для скорости)
+            renderUserList();
         }
+
+        // Запускаем
         init();
     </script>
 </body>
