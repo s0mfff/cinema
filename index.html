@@ -50,7 +50,7 @@
             padding: 12px;
             overflow-y: auto;
             flex-grow: 1;
-            padding-bottom: 110px; /* Увеличили отступ, чтобы меню ничего не перекрывало */
+            padding-bottom: 110px;
             position: relative;
             z-index: 1;
         }
@@ -230,14 +230,12 @@
         input[type="range"]:disabled::-webkit-slider-thumb { background: #555; border-color: #333; cursor: default; transform: none; }
         input[type="range"]:disabled { opacity: 0.5; }
 
-        /* ИСПРАВЛЕННЫЙ БЛОК КНОПОК И ОЦЕНКИ */
         .footer-score {
             display: flex;
             flex-direction: column;
             align-items: stretch;
             gap: 16px;
             padding-top: 12px;
-            /* Убрали margin-top: auto, чтобы блок не улетал вниз под меню */
         }
         .score-display {
             font-size: 3.5rem;
@@ -1076,12 +1074,14 @@
 
         function updateScoreDisplay() {
             if (currentMode === 'basic') {
+                scoreDisplay.style.display = 'block'; // Показываем большую цифру в базовом режиме
                 const val = parseFloat(basicSlider.value);
                 totalScore.textContent = val.toFixed(1);
                 document.querySelector('#score-display .slash').textContent = ' / 10';
                 scoreDisplay.classList.remove('gold');
                 updateSliderStyle(basicSlider, '#5b8cff');
             } else {
+                scoreDisplay.style.display = 'none'; // Прячем большую цифру в расширенном режиме
                 const script = parseFloat(sliders.script.value);
                 const acting = parseFloat(sliders.acting.value);
                 const directing = parseFloat(sliders.directing.value);
@@ -1461,9 +1461,11 @@
             if (mode === 'basic') {
                 modalBasicSection.classList.add('active');
                 modalExtendedSection.classList.remove('active');
+                modalScore.style.display = 'block'; // Показываем в базовом
             } else {
                 modalExtendedSection.classList.add('active');
                 modalBasicSection.classList.remove('active');
+                modalScore.style.display = 'none'; // Прячем в расширенном
             }
             if (mode === 'basic') {
                 updateSliderStyle(modalBasicSlider, '#5b8cff');
@@ -1557,6 +1559,7 @@
                 modalModeToggle.style.display = 'none';
                 modalBasicSection.classList.add('active');
                 modalExtendedSection.classList.remove('active');
+                modalScore.style.display = 'block'; // Показываем
             } else {
                 modalModeToggle.style.display = 'flex';
                 modalModeToggle.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
@@ -1564,6 +1567,7 @@
                 if (targetBtn) targetBtn.classList.add('active');
                 modalBasicSection.classList.add('active');
                 modalExtendedSection.classList.remove('active');
+                modalScore.style.display = 'block'; // Показываем (т.к. открывается базовая)
             }
 
             modalScore.textContent = basicScore.toFixed(1) + ' / 10';
